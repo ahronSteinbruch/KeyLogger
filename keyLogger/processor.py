@@ -1,6 +1,5 @@
 from typing import List, Protocol
-
-from .sinker import Sinker
+from sinker import Sinker
 
 
 class Processor(Protocol):

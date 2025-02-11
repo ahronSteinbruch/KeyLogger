@@ -1,8 +1,7 @@
 from typing import Protocol
-
-from .sinker import Sinker
-from .processor import Processor
-from .listner import Listner
+from sinker import Sinker
+from processor import Processor
+from listner import Listner
 
 
 class Manager(Protocol):
