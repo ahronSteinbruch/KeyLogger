@@ -1,0 +1,35 @@
+from typing import List, Protocol
+
+
+class Listner(Protocol):
+    buffer: List[str]  # buffer to store the data
+
+    """
+    Listner is a protocol that defines the interface for listening to data.
+
+    it will may be implemented by classes that listen to data in different ways.
+    such as:
+        Listen to keyboard events
+        Listen to mouse events
+        Listen to file changes
+    """
+
+    def start(self) -> None:
+        """
+        start listening to data.
+        """
+        ...
+
+    def stop(self) -> None:
+        """
+        stop listening to data.
+        """
+        ...
+
+    def get_data(self) -> List[str]:
+        """
+        get the data from the buffer.
+
+        Also, clear the buffer after getting the data.
+        """
+        ...
