@@ -1,22 +1,24 @@
-from typing import List, Protocol
-from sinker import Sinker
+import time
+from dataclasses import dataclass
 
 
-class Processor(Protocol):
-    sink: Sinker
-    """
-    Processor is a protocol that defines the interface for processing data.
+class Process:
+    def __init__(self,data):
+        self.data = data
 
-    it will may be implemented by classes that process data in different ways.
-    such as:
-        Add timestamp to the data
-        Encrypt the data
-        Compress the data
-        Add a unique identifier to the data source
-    """
+    def process_data(self):
+        timestamp = time.time()
+        data_wrapper = DataWrapper(data,timestamp)
+        # Do encryption here if needed
+        encrypted_data = self.encrypt_data(data_wrapper)
+        self.send_to_sink(encrypted_data)
 
-    def process(self, data: List) -> None:
-        """
-        process the data in some way.
-        """
-        ...
+    def encrypt_data(self, data_wrapper):
+        # Implement your encryption logic here
+        # For demonstration purposes, let's just return the data as is
+        return data_wrapper
+
+    def send_to_sink(self, data):
+        # Implement your sink logic here
+        # For demonstration purposes, let's just print the data
+        print(data)

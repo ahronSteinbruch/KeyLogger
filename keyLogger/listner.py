@@ -33,3 +33,4 @@ class Listner(Protocol):
         Also, clear the buffer after getting the data.
         """
         ...
+fvfdgfth
