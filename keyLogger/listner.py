@@ -1,4 +1,5 @@
 from typing import List, Protocol
+import keyboard
 
 
 class Listner(Protocol):
