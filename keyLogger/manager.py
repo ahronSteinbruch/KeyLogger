@@ -1,12 +1,12 @@
 from typing import Protocol
 from sinker import Sinker
-from processor import Processor
+from processor import Process
 from listner import Listner
 
 
 class Manager(Protocol):
     sink: Sinker
-    processor: Processor
+    processor: Process
     listner: Listner
 
     """

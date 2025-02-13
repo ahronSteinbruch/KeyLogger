@@ -1,5 +1,5 @@
 import time
-from dataclasses import dataclass
+from dataWrapper import DataWrapper
 
 
 class Process:
@@ -8,7 +8,7 @@ class Process:
 
     def process_data(self):
         timestamp = time.time()
-        data_wrapper = DataWrapper(data,timestamp)
+        data_wrapper = DataWrapper(self.data,timestamp)
         # Do encryption here if needed
         encrypted_data = self.encrypt_data(data_wrapper)
         self.send_to_sink(encrypted_data)

