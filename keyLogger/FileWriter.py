@@ -6,7 +6,7 @@ class FileWriter:
         self.write_to_file(data_wrapper)  
     
     def write_to_file(self,data_wrapper):
-        formatted_data = data_wrapper.format_data()
+        formatted_data = data_wrapper.format_as_dict()
         try:
             with open(self.file_path, 'a') as file:
                 file.write(formatted_data)
