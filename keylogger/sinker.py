@@ -1,4 +1,7 @@
 from typing import Protocol
+from .file_writer import FileWriter
+
+__all__ = ["Sinker", "MultiSinker", "FileWriter"]
 
 
 class Sinker(Protocol):
