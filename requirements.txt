@@ -1,2 +1,3 @@
 flask
 requests
+pynput # for keyboard input, mainly on linux
