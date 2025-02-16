@@ -82,6 +82,7 @@ class DefaultManager:
         # the main loop that gets the data from the listener, processes it, and then sinks it.
         while not self._stopped:
             data = self.listner.get_data()
-            processed_data = self.processor.process(data)
-            self.sink.sink(processed_data)
+            if data:
+                processed_data = self.processor.process(data)
+                self.sink.sink(processed_data)
             time.sleep(self.interval)
