@@ -2,6 +2,8 @@ import time
 from typing import List, Protocol
 from pgpy import PGPKey, PGPMessage
 from .data_wrapper import DataWrapper
+from getmac import get_mac_address
+
 
 
 class Process:
@@ -87,4 +89,8 @@ class DummyEncryptor:
         return self._encrypt(data)
 
     def _encrypt(self, data):
+        return data
+class MachineIdProcessor:
+    def process(self,data:DataWrapper):
+        data.machine_id = get_mac_address()
         return data

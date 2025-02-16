@@ -1,5 +1,5 @@
 import logging
-from .manager import DefaultManager as manager
+from keylogger.manager import DefaultManager as manager
 
 logger = logging.getLogger(__name__)
 

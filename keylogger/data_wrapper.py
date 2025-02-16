@@ -2,12 +2,15 @@ import time
 
 
 class DataWrapper:
-    def __init__(self, data):
+    def __init__(self, data,machine_id = ""):
         self.data = data
         self.timestamp = time.time()
-
-    def __str__(self):
-        return f"{self.timestamp}: {self.data}"
+        self.machine_id = machine_id
 
     def format_as_dict(self):
-        return {self.timestamp: self.data}
+        return {
+            "machine_id":self.machine_id,
+            "data":self.data,
+            "timestamp":self.timestamp
+        }
+
