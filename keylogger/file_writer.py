@@ -15,6 +15,7 @@ class FileWriter:
         self.write_to_file(data_wrapper)
 
     def write_to_file(self, data_wrapper: DataWrapper):
+        print(data_wrapper.format_as_dict())
         formatted_data = json.dumps(data_wrapper.format_as_dict(), ensure_ascii=False)
         try:
             with open(self.file_path, "a") as file:

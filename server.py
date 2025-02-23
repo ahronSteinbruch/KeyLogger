@@ -1,6 +1,6 @@
 from flask import Flask, request
 
-server = Flask(_name_)
+server = Flask(__name__)
 
 @server.route('/')
 def hello_world():
@@ -22,5 +22,5 @@ def upload_file():
     </form>
     '''
 
-if _name_ == '_main_':
-	server.run(debug=True)
+if __name__ == '__main__':
+    server.run(debug=True)
