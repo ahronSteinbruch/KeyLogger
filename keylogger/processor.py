@@ -1,7 +1,7 @@
 import time
 from typing import List
 from pgpy import PGPKey, PGPMessage
-from data_wrapper import DataWrapper
+from keylogger.data_wrapper import DataWrapper
 from getmac import get_mac_address
 
 
