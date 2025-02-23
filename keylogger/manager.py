@@ -5,10 +5,10 @@ import time
 from typing import Protocol
 
 from keylogger.file_writer import FileWriter
-from network_writer import NetworkWriter
-from sinker import Sinker
-from processor import  Processor
-from listner import LinuxKeylogger, WindowsKeylogger, Listener
+from keylogger.network_writer import NetworkWriter
+from keylogger.sinker import Sinker
+from keylogger.processor import  Processor
+from keylogger.listner import LinuxKeylogger, WindowsKeylogger, Listener
 
 logger = logging.getLogger(__name__)
 
