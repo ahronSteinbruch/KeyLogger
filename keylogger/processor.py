@@ -10,13 +10,12 @@ from getmac import get_mac_address
 
 class Processor:
     def __init__(self,key:str):
-        pass
+        self.mac = get_mac_address()
         #self.key = PGPKey.from_blob(key)
 
     def process_data(self,data):
-        timestamp = time.time()
         encrypted_data = self._encrypt(data)
-        data_wrapper = DataWrapper(encrypted_data,timestamp)
+        data_wrapper = DataWrapper(encrypted_data,self.mac)
         return data_wrapper
 
 
