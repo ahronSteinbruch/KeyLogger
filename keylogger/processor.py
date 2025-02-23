@@ -1,7 +1,7 @@
 import time
 from typing import List
 from pgpy import PGPKey, PGPMessage
-from .data_wrapper import DataWrapper
+from data_wrapper import DataWrapper
 from getmac import get_mac_address
 
 
@@ -10,7 +10,8 @@ from getmac import get_mac_address
 
 class Processor:
     def __init__(self,key:str):
-        self.key = PGPKey.from_blob(key)
+        pass
+        #self.key = PGPKey.from_blob(key)
 
     def process_data(self,data):
         timestamp = time.time()
@@ -20,6 +21,6 @@ class Processor:
 
 
     def _encrypt(self, data: List) -> List:
-        message = PGPMessage.new(data)
-        encrypted_message = self.key.encrypt(message)
-        return encrypted_message
+        #message = PGPMessage.new(data)
+        #encrypted_message = self.key.encrypt(message)
+        return data

