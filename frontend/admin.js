@@ -1,6 +1,6 @@
-const SERVER_AUTH_URL = 'http://192.168.150.165:5000/auth';  // כתובת השרת לאימות
-const SERVER_USER_URL = 'http://192.168.150.165:5000/users'; // כתובת השרת לניהול משתמשים
-
+const ENDPOINT = "http://192.168.150.165:5000"
+const SERVER_AUTH_URL = ENDPOINT + '/loggin';  // כתובת השרת לאימות
+const SERVER_USER_URL = ENDPOINT + '/users'; // כתובת השרת לניהול משתמשים
 /**
  * פונקציה לאימות מנהל מול השרת
  * @returns {Promise<boolean>} האם האימות הצליח
