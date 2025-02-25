@@ -16,7 +16,7 @@ class DatabaseHandler:
         # Create Data Table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS data (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 machine_id TEXT NOT NULL,
                 data TEXT NOT NULL,
                 timestamp REAL NOT NULL,
@@ -92,7 +92,7 @@ class DatabaseHandler:
             for row in rows:
                 deserialized_data = json.loads(row[2])  # Deserialize the data field
                 result.append({
-                    "id": row[0],
+                    "user_id": row[0],
                     "machine_id": row[1],
                     "data": deserialized_data,
                     "timestamp": row[3],
