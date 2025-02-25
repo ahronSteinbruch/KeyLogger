@@ -1,0 +1,129 @@
+/* עיצוב כללי לדף */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-image: url('haker.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* עיצוב לתמונות */
+.top-right, .top-left {
+    width: 77px;  /* חצי מהגודל המקורי */
+    height: 71px; /* חצי מהגודל המקורי */
+    position: absolute;
+    top: 27px;
+}
+
+.top-right {
+    right: 10px;
+}
+
+.top-left {
+    left: 10px;
+}
+
+/* עיצוב לכותרות בראש הדף */
+.header {
+    width: 100%;
+    background-color: blue;
+    color: white;
+    text-align: center;
+    padding: 40px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.header-text {
+    display: inline-block;
+}
+
+/* עיצוב לכותרת הראשית */
+h1 {
+    margin: 0;
+}
+
+/* עיצוב לכותרת המשנית */
+h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+/* עיצוב למרכז הדף */
+.login-container {
+    background-color: rgba(255, 255, 255, 0.8); /* רקע לבן חצי שקוף */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+    text-align: center;
+    width: 80%;
+    max-width: 400px;
+}
+
+/* עיצוב לשדות הכניסה */
+.login-fields {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.login-fields label {
+    margin-bottom: 5px;
+    align-self: flex-end;
+}
+
+.login-fields input[type="text"], .login-fields input[type="password"] {
+    display: block;
+    margin: 10px 0;
+    padding: 10px;
+    width: calc(100% - 20px);
+    max-width: 400px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: right; /* יישור הטקסט בתוך התיבה לימין */
+}
+
+/* עיצוב ל-placeholder לשדה הכניסה */
+input[type="text"]::placeholder, input[type="password"]::placeholder {
+    text-align: right;
+}
+
+/* עיצוב לכפתור כניסה לחשבון */
+.login-fields button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+    align-self: center;
+}
+
+.login-fields button:hover {
+    background-color: #0056b3;
+}
+
+/* עיצוב לכפתור ניהול משתמשים */
+.manage-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.manage-button:hover {
+    background-color: #0056b3;
+}
