@@ -49,7 +49,8 @@ class WindowTracker:
             self.psutil = psutil
         except ImportError:
             self.psutil = None
-            logger.warning("psutil not found. Process names will not be available.")
+            logger.warning(
+                "psutil not found. Process names will not be available.")
 
         # הגדרת פרוטוטיפ לפונקצית Callback
         self.WinEventProcType = ctypes.WINFUNCTYPE(
@@ -210,7 +211,8 @@ class WindowTracker:
         self._running = True
 
         # הפעלת לולאת ההודעות בתהליך נפרד
-        self._thread = threading.Thread(target=self._message_loop, deamon=True)
+        self._thread = threading.Thread(target=self._message_loop)
+        self._thread.daemon = True
         self._thread.start()
 
     def stop(self):

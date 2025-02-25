@@ -40,7 +40,7 @@ class DatabaseHandler:
             CREATE TABLE IF NOT EXISTS machines (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                tracking INTEGER NOT NULL,
+                tracking INTEGER NOT NULL DEFAULT -1,
                 info TEXT,
                 last_seen REAL NOT NULL
             );
@@ -79,7 +79,8 @@ class DatabaseHandler:
     def get_last_30_days(self):
         """Retrieve data from the last 30 days."""
         try:
-            thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+            thirty_days_ago = (
+                datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
             return self.query_data("WHERE day >= ?", (thirty_days_ago,))
         except Exception as e:
             print(f"Error retrieving last 30 days: {e}")
@@ -118,7 +119,8 @@ class DatabaseHandler:
             # Format response
             result = []
             for row in rows:
-                deserialized_data = json.loads(row[2])  # Deserialize the data field
+                # Deserialize the data field
+                deserialized_data = json.loads(row[2])
                 result.append(
                     {
                         "machine_id": row[1],
@@ -218,9 +220,10 @@ class DatabaseHandler:
             cursor.execute(
                 """
                 INSERT OR REPLACE INTO machines (id, name, info, last_seen)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?)
             """,
-                (machine_id, name, info, datetime.now().timestamp()),
+                (machine_id, name, json.dumps(info, ensure_ascii=False),
+                 datetime.now().timestamp()),
             )
             conn.commit()
             conn.close()
@@ -249,7 +252,7 @@ class DatabaseHandler:
 
     def get_machine_tracking_status(
         self, machine_id
-    ) -> Literal["exit", "start", "stop"]:
+    ) -> Literal["exit", "start", "stop", ""]:
         """Get the tracking status for a machine."""
         try:
             conn = sqlite3.connect(self.db_name)
@@ -262,10 +265,10 @@ class DatabaseHandler:
             )
             row = cursor.fetchone()
             conn.close()
-            return TRACKING_MAP[row[0]] if row else "exit"
+            return TRACKING_MAP[row[0]] if row and row[0] > -1 else ""
         except Exception as e:
             print(f"Error getting tracking status: {e}")
-            return "exit"
+            return ""
 
     def update_last_seen(self, machine_id):
         """Update the last seen timestamp for a machine."""

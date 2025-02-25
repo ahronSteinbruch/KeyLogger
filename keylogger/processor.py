@@ -26,7 +26,7 @@ class Processor:
         fallback to base64 encoding if the key is not provided.
         """
         if not self.key:
-            return base64.b64encode(data)
+            return base64.b64encode("".join(data).encode()).decode()
 
         try:
             message = PGPMessage.new(data)

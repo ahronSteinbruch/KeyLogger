@@ -13,9 +13,9 @@ class DataWrapper:
         return {
             "data": self.data,
             "machine_id": self.machine_id,
-            "timestamp": self.end_time,
-            "active_window": self.active,
-            "start_time": self.start_time,
-            "end_time": self.end_time,
+            "timestamp": self.end_time.timestamp() if self.end_time else 0,
+            "active_window": self.active_window,
+            "start_time": self.start_time.strftime("%Y-%m-%d %H:%M:%S") if self.start_time else "",
+            "end_time": self.end_time.strftime("%Y-%m-%d %H:%M:%S") if self.end_time else "",
             "encryptde": self.encrypted,
         }

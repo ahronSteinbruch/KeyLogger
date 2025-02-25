@@ -236,8 +236,10 @@ def get_ctrl():
     while max_wait > datetime.now():
         time.sleep(1)
         ctrl = db_handler.get_machine_tracking_status(machine_id)
-        if ctrl != last:
+        if ctrl != last and ctrl:
             return jsonify({"ctrl": ctrl}), 200
+
+    return jsonify({"ctrl": last}), 200
 
 
 # Run the Flask app
