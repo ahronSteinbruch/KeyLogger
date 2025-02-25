@@ -7,7 +7,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-image: url('haker.png');
+    background-image: url('admin.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -18,7 +18,7 @@ body {
     width: 77px;  /* חצי מהגודל המקורי */
     height: 71px; /* חצי מהגודל המקורי */
     position: absolute;
-    top: 27px;
+    top: 10px;
 }
 
 .top-right {
@@ -32,10 +32,10 @@ body {
 /* עיצוב לכותרות בראש הדף */
 .header {
     width: 100%;
-    background-color: blue;
+    background-color: black; /* שינוי לרקע שחור */
     color: white;
     text-align: center;
-    padding: 40px;
+    padding: 20px;
     box-sizing: border-box;
     position: relative;
 }
@@ -79,7 +79,7 @@ h2 {
     align-self: flex-end;
 }
 
-.login-fields input[type="text"], .login-fields input[type="password"] {
+.login-fields input[type="password"] {
     display: block;
     margin: 10px 0;
     padding: 10px;
@@ -91,7 +91,7 @@ h2 {
 }
 
 /* עיצוב ל-placeholder לשדה הכניסה */
-input[type="text"]::placeholder, input[type="password"]::placeholder {
+input[type="password"]::placeholder {
     text-align: right;
 }
 
@@ -111,15 +111,65 @@ input[type="text"]::placeholder, input[type="password"]::placeholder {
     background-color: #0056b3;
 }
 
+/* עיצוב לטבלת המשתמשים */
+#adminSection {
+    background-color: rgba(255, 255, 255, 0.8); /* רקע לבן חצי שקוף */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+    text-align: center;
+    width: 80%;
+    max-width: 800px;
+}
 
-/*עיצוב לטקסט שמירת הזכויות*/
+#adminSection table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#adminSection th, #adminSection td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+#adminSection th {
+    background-color: #007bff;
+    color: white;
+}
+
+#adminSection button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#adminSection button:hover {
+    background-color: #cc0000;
+}
+
+/* עיצוב להודעות */
+#messageBox {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    direction: rtl;
+}
+
+/* עיצוב לטקסט שמירת הזכויות */
 .footer {
     background-color: rgba(255, 255, 255, 0.8); /* רקע חצי שקוף */
     padding: 10px;
     text-align: center;
     position: fixed; /* שינוי למיקום קבוע */
     bottom: 0; /* מיקום בתחתית הדף */
-    width: 100%; /* רוחב מלא */
+    width: 100%;
     z-index: 1;
 }
 
