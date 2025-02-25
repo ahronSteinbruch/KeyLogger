@@ -7,3 +7,4 @@ getmac
 PyJWT
 flask-cors
 psutil
+standard-imghdr
