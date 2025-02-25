@@ -5,3 +5,4 @@ pgpy
 keyboard
 getmac
 flask-cors
+psutil
