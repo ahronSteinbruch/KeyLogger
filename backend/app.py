@@ -73,18 +73,18 @@ def login():    # Login endpoint to authenticate user
 
         # Parse the JSON data
         data = request.json
-        name = data.get('id')
+        user_id = data.get('user_id')
         password = data.get('password')
 
-        # Validate fields
-        if not all([id, password]):
+        # Val user_id ate fields
+        if not all([user_id, password]):
             return jsonify({"error": "Missing required fields"}), 400
 
         # Dummy check for demonstration purposes
-        if id == 315591909 and password == "007":
+        if user_id == 315591909 and password == "007":
             return jsonify({"message": "Login successful"}), 200
         else:
-            return jsonify({"error": "Invalid credentials"}), 401
+            return jsonify({"error": "Invaluser_id credentials"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
