@@ -32,7 +32,7 @@ body {
 /* עיצוב לכותרות בראש הדף */
 .header {
     width: 100%;
-    background-color: black; /* שינוי לרקע שחור */
+    background-color: #2C3E50    ; /* שינוי לרקע שחור */
     color: white;
     text-align: center;
     padding: 20px;
