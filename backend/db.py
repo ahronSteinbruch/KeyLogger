@@ -203,7 +203,7 @@ class DatabaseHandler:
                         "id": row[0],
                         "name": row[1],
                         "tracking": row[2],
-                        "info": row[3],
+                        "info": json.loads(row[3]) if row[3] else {},
                         "last_seen": row[4],
                     }
                 )

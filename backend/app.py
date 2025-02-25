@@ -169,6 +169,15 @@ def machine():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/machine', methods=['GET'])
+def get_all_machines():
+    try:
+        machines = db_handler.get_machines()
+        return jsonify(machines), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/agent', methods=['POST'])
 @token_required
 def agent():
