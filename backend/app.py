@@ -1,11 +1,14 @@
 import logging
 import time
 from flask import Flask, request, jsonify
+
 import sqlite3
+from flask_cors import CORS
 from datetime import datetime, timedelta
 from db import DatabaseHandler
 
 app = Flask(__name__)
+cors = CORS(app)
 # Initialize Database Handler
 
 db_handler = DatabaseHandler()
