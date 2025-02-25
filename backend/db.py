@@ -10,7 +10,7 @@ TRACKING_MAP = ["exit", "start", "stop"]
 
 # Database Handler Class
 class DatabaseHandler:
-    def __init__(self, db_name="data.db"):
+    def __init__(self, db_name):
         self.db_name = db_name
         self.init_db()
 
@@ -217,10 +217,10 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO machines (id, name, tracking, info, last_seen)
+                INSERT OR REPLACE INTO machines (id, name, info, last_seen)
                 VALUES (?, ?, ?, ?, ?)
             """,
-                (machine_id, name, False, info, datetime.now().timestamp()),
+                (machine_id, name, info, datetime.now().timestamp()),
             )
             conn.commit()
             conn.close()
@@ -292,3 +292,33 @@ class DatabaseHandler:
         day = dt.strftime("%Y-%m-%d")
         hour = dt.hour
         return day, hour
+
+    def get_agents(self):
+        """Retrieve all agents from the database."""
+
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM agents
+            """
+            )
+            rows = cursor.fetchall()
+            conn.close()
+
+            # Format response
+            result = []
+            for row in rows:
+                result.append(
+                    {
+                        "id": row[0],
+                        "name": row[1],
+                    }
+                )
+            return result
+        except Exception as e:
+            print(f"Error retrieving agents: {e}")
+            return json.dumps({
+                "error": "Error retrieving agents"
+            })
