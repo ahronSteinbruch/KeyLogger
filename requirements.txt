@@ -4,3 +4,4 @@ pynput # for keyboard input, mainly on linux
 pgpy
 keyboard
 getmac
+flask-cors
