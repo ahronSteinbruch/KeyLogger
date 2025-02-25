@@ -2,6 +2,10 @@ import hashlib
 import sqlite3
 from datetime import datetime, timedelta
 import json
+from typing import Literal
+
+
+TRACKING_MAP = ["exit", "start", "stop"]
 
 
 # Database Handler Class
@@ -16,7 +20,7 @@ class DatabaseHandler:
         cursor = conn.cursor()
 
         # Create Data Table
-        cursor.execute(
+        cursor.executescript(
             """
             CREATE TABLE IF NOT EXISTS data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,13 +29,13 @@ class DatabaseHandler:
                 timestamp REAL NOT NULL,
                 day DATE NOT NULL,
                 hour INTEGER NOT NULL
-            )
+            );
                        
             CREATE TABLE IF NOT EXISTS agents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 hash TEXT NOT NULL
-            )
+            );
                        
             CREATE TABLE IF NOT EXISTS machines (
                 id TEXT PRIMARY KEY,
@@ -39,7 +43,7 @@ class DatabaseHandler:
                 tracking INTEGER NOT NULL,
                 info TEXT,
                 last_seen REAL NOT NULL
-            )
+            );
         """
         )
 
@@ -117,10 +121,9 @@ class DatabaseHandler:
                 deserialized_data = json.loads(row[2])  # Deserialize the data field
                 result.append(
                     {
-                        "user_id": row[0],
                         "machine_id": row[1],
                         "data": deserialized_data,
-                        "timestamp": row[3],
+                        "timestamp": float(row[3]) if row[3] else None,
                         "day": row[4],
                         "hour": row[5],
                     }
@@ -226,7 +229,7 @@ class DatabaseHandler:
             print(f"Error creating or updating machine: {e}")
             return False
 
-    def toggle_tracking(self, machine_id, tracking):
+    def toggle_tracking(self, machine_id, tracking: Literal["exit", "start", "stop"]):
         """Toggle tracking for a machine."""
         try:
             conn = sqlite3.connect(self.db_name)
@@ -243,6 +246,26 @@ class DatabaseHandler:
         except Exception as e:
             print(f"Error toggling tracking: {e}")
             return False
+
+    def get_machine_tracking_status(
+        self, machine_id
+    ) -> Literal["exit", "start", "stop"]:
+        """Get the tracking status for a machine."""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT tracking FROM machines WHERE id = ?
+            """,
+                (machine_id,),
+            )
+            row = cursor.fetchone()
+            conn.close()
+            return TRACKING_MAP[row[0]] if row else "exit"
+        except Exception as e:
+            print(f"Error getting tracking status: {e}")
+            return "exit"
 
     def update_last_seen(self, machine_id):
         """Update the last seen timestamp for a machine."""
