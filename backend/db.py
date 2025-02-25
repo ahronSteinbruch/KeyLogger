@@ -33,6 +33,7 @@ class DatabaseHandler:
                        
             CREATE TABLE IF NOT EXISTS agents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                is_admin INTEGER NOT NULL DEFAULT 0,
                 name TEXT NOT NULL,
                 hash TEXT NOT NULL
             );
@@ -156,6 +157,26 @@ class DatabaseHandler:
             return row is not None
         except Exception as e:
             print(f"Error checking agent password: {e}")
+            return False
+
+    def check_is_admin(self, id) -> bool:
+        """Check if the agent is an admin."""
+
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT is_admin FROM agents WHERE id = ?
+            """,
+                (id,),
+            )
+            row = cursor.fetchone()
+            conn.close()
+
+            return row[0] == 1
+        except Exception as e:
+            print(f"Error checking agent is admin: {e}")
             return False
 
     def create_agent(self, id, name, password) -> bool:
