@@ -1,11 +1,17 @@
+import logging
+import time
 from flask import Flask, request, jsonify
 import sqlite3
 from datetime import datetime, timedelta
 from db import DatabaseHandler
+
 app = Flask(__name__)
 # Initialize Database Handler
 
 db_handler = DatabaseHandler()
+
+logger = logging.getLogger(__name__)
+
 
 # POST endpoint to receive data
 @app.route('/data', methods=['POST'])
@@ -88,7 +94,26 @@ def login():    # Login endpoint to authenticate user
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Run the Flask app
-if __name__ == '__main__':
-    app.run(debug=True,host="0.0.0.0")
 
+@app.route("/ctrl", methods=["GET"])
+def get_ctrl():
+    last = request.args.get("last")
+    machine_id = request.args.get("machine_id")
+
+    logger.info(f"Received control request for machine {machine_id}, last: {last}")
+
+    if not machine_id:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    if last not in ["stop", "start"]:
+        # Alweys return start
+        return jsonify({"ctrl": "start"}), 200
+
+    time.sleep(5)
+    return jsonify({"ctrl": db_handler.get_machine_tracking_status(machine_id)}), 200
+
+
+# Run the Flask app
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    app.run(debug=True, host="0.0.0.0")
