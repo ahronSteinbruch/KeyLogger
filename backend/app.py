@@ -58,7 +58,7 @@ def token_required(f):
 
 
 # POST endpoint to receive data
-@app.route("/api/data", methods=["POST"])
+@app.route("/data", methods=["POST"])
 def receive_data():
     try:
         # Check if the request contains JSON
