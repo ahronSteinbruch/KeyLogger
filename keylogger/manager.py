@@ -76,7 +76,7 @@ class DefaultManager:
             try:
                 self.window_tracker = WindowTracker(
                     # use lambda to call the start_new_sequence method with the window title
-                    lambda w: klogger.start_new_sequence(w.title)
+                    lambda w: klogger.start_new_sequence(w.title or w.process_name)
                 )
             except Exception:
                 logger.error("Failed to create the WindowTracker", exc_info=False)
