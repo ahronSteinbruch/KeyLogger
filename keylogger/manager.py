@@ -185,7 +185,14 @@ class DefaultManager:
         """
 
         if not self.endpoint:
-            return "exit"
+            if last:
+                try:
+                    time.sleep(10)
+                    return last
+                except KeyboardInterrupt:
+                    return "exit"
+
+            return "start"
 
         try:
             resp = requests.get(

