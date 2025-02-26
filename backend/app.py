@@ -1,6 +1,6 @@
 import logging
 import time
-from flask import Flask, request, jsonify
+from flask import Flask, redirect, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta
 from db import DatabaseHandler
@@ -58,7 +58,7 @@ def token_required(f):
 
 
 # POST endpoint to receive data
-@app.route("/data", methods=["POST"])
+@app.route("/api/data", methods=["POST"])
 def receive_data():
     try:
         # Check if the request contains JSON
@@ -67,8 +67,9 @@ def receive_data():
 
         # Parse the JSON data
         data = request.json
+        logger.debug(f"Received data: {data}")
         machine_id = data.get("machine_id")
-        raw_data = data.get("data")
+        raw_data = data.get("data", [])
         timestamp = data.get("timestamp")
 
         # Validate fields
@@ -93,7 +94,7 @@ def receive_data():
 
 
 # GET endpoint to retrieve the last 30 days of data
-@app.route("/data", methods=["GET"])
+@app.route("/api/data", methods=["GET"])
 @token_required
 def get_last_30_days():
     try:
@@ -104,7 +105,7 @@ def get_last_30_days():
 
 
 # GET endpoint to retrieve data for a specific machine
-@app.route("/data/<machine_id>", methods=["GET"])
+@app.route("/api/data/<machine_id>", methods=["GET"])
 @token_required
 def get_data_by_machine(machine_id):
     try:
@@ -125,7 +126,7 @@ def get_data_by_day(day):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/agents", methods=["GET"])
+@app.route("/api/agents", methods=["GET"])
 @token_required
 def get_agents():
     try:
@@ -135,7 +136,7 @@ def get_agents():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/login", methods=["POST"])
+@app.route("/api/login", methods=["POST"])
 def login():
     try:
         if not request.is_json:
@@ -157,7 +158,7 @@ def login():
                     user_id
                 ),  # Replace with actual admin check logic
                 "exp": (
-                    datetime.utcnow() + timedelta(hours=1)
+                    datetime.now() + timedelta(days=1)
                 ).timestamp(),  # Correct usage
             }
             token = jwt.encode(token_payload, SECRET_KEY, algorithm="HS256")
@@ -169,8 +170,7 @@ def login():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/machine", methods=["POST"])
-@token_required
+@app.route("/api/machine", methods=["POST"])
 def machine():
     try:
         # Check if the request contains JSON
@@ -188,7 +188,7 @@ def machine():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/machine", methods=["GET"])
+@app.route("/api/machine", methods=["GET"])
 def get_all_machines():
     try:
         machines = db_handler.get_machines()
@@ -197,7 +197,7 @@ def get_all_machines():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/agent", methods=["POST"])
+@app.route("/api/agent", methods=["POST"])
 @token_required
 def agent():
     try:
@@ -216,7 +216,7 @@ def agent():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/ctrl", methods=["POST"])
+@app.route("/api/ctrl", methods=["POST"])
 @token_required
 def post_ctrl():
     try:
@@ -243,8 +243,7 @@ def post_ctrl():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/ctrl", methods=["GET"])
-@token_required
+@app.route("/api/ctrl", methods=["GET"])
 def get_ctrl():
     last = request.args.get("last")
     machine_id = request.args.get("machine_id")
@@ -269,7 +268,47 @@ def get_ctrl():
     return jsonify({"ctrl": last}), 200
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return redirect("/login")
+
+
+@app.route("/login", methods=["GET"])
+def login_page():
+    return app.send_static_file("login.html")
+
+
+@app.route("/dashboard", methods=["GET"])
+def dashboard_page():
+    return app.send_static_file("dashboard.html")
+
+
+@app.route("/users", methods=["GET"])
+def users_page():
+    return app.send_static_file("users.html")
+
+
+@app.route("/machines", methods=["GET"])
+def machines_page():
+    return app.send_static_file("machines.html")
+
+
+@app.route("/logs", methods=["GET"])
+def data_page():
+    return app.send_static_file("data.html")
+
+
+@app.route("/js/<path:path>")
+def send_js(path):
+    return app.send_static_file("js/" + path)
+
+
+@app.route("/css/<path:path>")
+def send_css(path):
+    return app.send_static_file("css/" + path)
+
+
 # Run the Flask app
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     app.run(debug=True, host="0.0.0.0")

@@ -1,9 +1,11 @@
 import hashlib
+import logging
 import sqlite3
 from datetime import datetime, timedelta
 import json
 from typing import Literal
 
+logger = logging.getLogger(__name__)
 
 TRACKING_MAP = ["exit", "start", "stop"]
 
@@ -123,7 +125,8 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 f"""
-                SELECT * FROM data {condition}
+                SELECT id, data, timestamp, active_window, start_time, end_time, machine_id
+                FROM data {condition}
             """,
                 params,
             )
@@ -134,22 +137,21 @@ class DatabaseHandler:
             result = []
             for row in rows:
                 # Deserialize the data field
-                deserialized_data = json.loads(row[2])
+                deserialized_data = json.loads(row[1])
                 result.append(
                     {
-                        "machine_id": row[1],
+                        "id": row[0],
                         "data": deserialized_data,
-                        "timestamp": row[3],
-                        "active_window": row[4],
-                        "start_time": row[5],
-                        "end_time": row[6],
-                        "day": row[7],
-                        "hour": row[8],
+                        "timestamp": row[2],
+                        "active_window": row[3],
+                        "start_time": row[4],
+                        "end_time": row[5],
+                        "machine_id": row[6],
                     }
                 )
             return result
         except Exception as e:
-            print(f"Error querying data: {e}")
+            logger.error(f"Error querying data: {e}")
             return []
 
     def check_agent_password(self, id, password) -> bool:
@@ -195,7 +197,7 @@ class DatabaseHandler:
             print(f"Error checking agent is admin: {e}")
             return False
 
-    def create_agent(self, id, name, password) -> bool:
+    def create_or_update_agent(self, id, name, password, admin: bool = False) -> bool:
         """Create a new agent in the database."""
 
         try:
@@ -206,10 +208,10 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO agents (id, name, hash)
-                VALUES (?, ?, ?)
-            """,
-                (id, name, hash),
+                INSERT OR REPLACE INTO agents (id, name, hash, is_admin)
+                VALUES (?, ?, ?, ?)
+                """,
+                (id, name, hash, 1 if admin else 0),
             )
             conn.commit()
             conn.close()
@@ -364,3 +366,16 @@ class DatabaseHandler:
         except Exception as e:
             print(f"Error retrieving agents: {e}")
             return json.dumps({"error": "Error retrieving agents"})
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 4:
+        print("Usage: python db.py <db_path> <username> <password>")
+        sys.exit(1)
+
+    username, password = sys.argv[2], sys.argv[3]
+    db_handler = DatabaseHandler(sys.argv[1])
+    db_handler.create_or_update_agent(username, username, password, admin=True)
+    print(f"Agent {username} created successfully.")

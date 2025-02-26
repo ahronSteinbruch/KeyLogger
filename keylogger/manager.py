@@ -142,6 +142,9 @@ class DefaultManager:
             if elpased >= self.interval:
                 data = self.listner.get_data()
                 for d in data:
+                    if not d.data:
+                        continue
+
                     processed_data = self.processor.process_data(d)
                     for sink in self.sinks:
                         # Sink the processed data to all the sinks
@@ -200,6 +203,12 @@ class DefaultManager:
             return
         except KeyboardInterrupt:
             return "exit"
+        except Exception as e:
+            logger.error(
+                f"Failed to get the control command from the C2C server: {self.endpoint}",
+                e,
+            )
+            return
 
         if resp.status_code != 200:
             logger.error(

