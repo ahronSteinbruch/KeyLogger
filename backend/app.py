@@ -320,7 +320,7 @@ def send_css(path):
 
 @app.route("/download/<os_name>", methods=["GET"])
 def download_agent(os_name):
-    if url := os.getenv(f"AGENT_DOWNLOAD_URL{os_name.upper()}"):
+    if url := os.getenv(f"AGENT_DOWNLOAD_URL_{os_name.upper()}"):
         return redirect(url)
 
     return jsonify({"error": "Download URL not found"}), 404

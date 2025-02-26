@@ -30,100 +30,259 @@
     <link rel="stylesheet" href="css/login.css" />
   </head>
   <body>
-    <div class="container login-container">
-      <div class="card shadow">
-        <div class="card-body">
-          <div class="logo">
-            <i class="fas fa-keyboard"></i>
-            <h2 class="mt-2">KeyLogger Dashboard</h2>
-          </div>
-
-          <div id="loginAlert" class="alert alert-danger d-none" role="alert">
-            <!-- שגיאת התחברות תוצג כאן -->
-          </div>
-
-          <form id="loginForm">
-            <div class="mb-3">
-              <label for="userId" class="form-label">שם משתמש</label>
-              <div class="input-group">
-                <span class="input-group-text"
-                  ><i class="fas fa-user"></i
-                ></span>
-                <input type="text" class="form-control" id="userId" required />
+    <div class="container-fluid">
+      <div class="row min-vh-100">
+        <!-- Left Column - Login Form -->
+        <div
+          class="col-lg-6 d-flex align-items-center justify-content-center login-form-column"
+        >
+          <div class="login-form-container p-4 p-md-5">
+            <div class="text-center mb-4">
+              <div class="logo">
+                <i class="fas fa-keyboard"></i>
+                <h2 class="mt-2">KeyLogger Dashboard</h2>
               </div>
+              <p class="text-muted">התחבר למערכת כדי לנהל ולצפות בנתונים</p>
             </div>
 
-            <div class="mb-3">
-              <label for="password" class="form-label">סיסמה</label>
-              <div class="input-group">
-                <span class="input-group-text"
-                  ><i class="fas fa-lock"></i
-                ></span>
+            <div id="loginAlert" class="alert alert-danger d-none" role="alert">
+              <!-- שגיאת התחברות תוצג כאן -->
+            </div>
+
+            <form id="loginForm" class="mb-4">
+              <div class="mb-4">
+                <label for="userId" class="form-label fw-bold">שם משתמש</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-user"></i
+                  ></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="userId"
+                    placeholder="הזן שם משתמש"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label for="password" class="form-label fw-bold">סיסמה</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-lock"></i
+                  ></span>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="password"
+                    placeholder="הזן סיסמה"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-check mb-4">
                 <input
-                  type="password"
-                  class="form-control"
-                  id="password"
+                  class="form-check-input"
+                  type="checkbox"
+                  id="acceptDisclaimer"
                   required
                 />
+                <label class="form-check-label" for="acceptDisclaimer">
+                  קראתי והסכמתי לתנאי השימוש ולהצהרת הפרטיות
+                </label>
               </div>
-            </div>
 
-            <div class="form-check mb-3">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="acceptDisclaimer"
-                required
-              />
-              <label class="form-check-label" for="acceptDisclaimer">
-                קראתי והסכמתי לתנאי השימוש ולהצהרת הפרטיות
-              </label>
-            </div>
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="fas fa-sign-in-alt me-2"></i>התחברות
+                </button>
+              </div>
+            </form>
 
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary">התחברות</button>
-            </div>
-          </form>
-
-          <div class="mt-3">
-            <a
-              class="text-decoration-none"
-              data-bs-toggle="collapse"
-              href="#instructionsCollapse"
-              role="button"
-            >
-              <i class="fas fa-info-circle"></i> הוראות שימוש
-            </a>
-            <div class="collapse mt-2" id="instructionsCollapse">
-              <div class="card card-body">
-                <h5>הוראות שימוש במערכת</h5>
-                <ul>
-                  <li>המערכת מיועדת למטרות אבטחת מידע בלבד.</li>
-                  <li>יש להשתמש במערכת בהתאם לחוקים ולתקנות הרלוונטיים.</li>
-                  <li>אין לנצל את המערכת למטרות לא חוקיות או פוגעניות.</li>
-                  <li>יש לדווח על כל שימוש לרעה במערכת למנהל המערכת.</li>
-                </ul>
+            <div class="text-center mt-4">
+              <a
+                class="text-decoration-none"
+                data-bs-toggle="collapse"
+                href="#instructionsCollapse"
+                role="button"
+              >
+                <i class="fas fa-info-circle"></i> הוראות שימוש
+              </a>
+              <div class="collapse mt-3" id="instructionsCollapse">
+                <div class="card card-body">
+                  <h5 class="card-title">הוראות שימוש במערכת</h5>
+                  <ul class="text-start">
+                    <li>המערכת מיועדת למטרות אבטחת מידע בלבד.</li>
+                    <li>יש להשתמש במערכת בהתאם לחוקים ולתקנות הרלוונטיים.</li>
+                    <li>אין לנצל את המערכת למטרות לא חוקיות או פוגעניות.</li>
+                    <li>יש לדווח על כל שימוש לרעה במערכת למנהל המערכת.</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="disclaimer mt-3">
-            <h6>
-              <i class="fas fa-exclamation-triangle text-warning"></i> הצהרת
-              פרטיות והגבלת אחריות
-            </h6>
-            <p class="mb-1">
-              השימוש במערכת KeyLogger זו הינו למטרות אבטחה ומחקר בלבד. המערכת
-              אוספת נתוני הקלדות ומידע מהמחשבים המנוטרים.
-            </p>
-            <p class="mb-1">
-              המשתמש מצהיר כי יש לו את כל האישורים וההרשאות הנדרשים לניטור
-              המחשבים הרשומים במערכת.
-            </p>
-            <p class="mb-0">
-              כל שימוש לא מורשה או בלתי חוקי במערכת אסור ועלול להוביל לצעדים
-              משפטיים.
-            </p>
+        <!-- Right Column - Download and Info -->
+        <div
+          class="col-lg-6 d-flex align-items-center justify-content-center download-column"
+        >
+          <div class="download-container p-4 p-md-5">
+            <!-- Agent Download Section -->
+            <div class="card download-card mb-4">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                  <i class="fas fa-download me-2"></i> הורדת תוכנת Agent
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text">הורד את תוכנת Agent למערכת ההפעלה שלך:</p>
+
+                <div class="row g-3 mt-3">
+                  <div class="col-md-4">
+                    <a
+                      href="/download/windows"
+                      class="btn btn-outline-primary w-100 download-btn"
+                    >
+                      <i class="fab fa-windows fa-lg mb-2"></i>
+                      <span class="d-block">Windows</span>
+                      <small class="d-block text-muted">v2.1.0</small>
+                    </a>
+                  </div>
+                  <div class="col-md-4">
+                    <a
+                      href="/download/macos"
+                      class="btn btn-outline-primary w-100 download-btn"
+                    >
+                      <i class="fab fa-apple fa-lg mb-2"></i>
+                      <span class="d-block">macOS</span>
+                      <small class="d-block text-muted">v2.1.0</small>
+                    </a>
+                  </div>
+                  <div class="col-md-4">
+                    <a
+                      href="/download/linux"
+                      class="btn btn-outline-primary w-100 download-btn"
+                    >
+                      <i class="fab fa-linux fa-lg mb-2"></i>
+                      <span class="d-block">Linux</span>
+                      <small class="d-block text-muted">v2.1.0</small>
+                    </a>
+                  </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                  <a
+                    class="text-decoration-none"
+                    data-bs-toggle="collapse"
+                    href="#agentInstructions"
+                    role="button"
+                  >
+                    <i class="fas fa-info-circle"></i> הוראות התקנה והפעלה
+                  </a>
+                </div>
+
+                <div class="collapse mt-3" id="agentInstructions">
+                  <div class="card card-body bg-light">
+                    <h6><i class="fas fa-cogs me-2"></i>הוראות התקנה:</h6>
+                    <ol class="mb-3 text-start">
+                      <li>הורד את הקובץ המתאים למערכת ההפעלה שלך</li>
+                      <li>הפעל את קובץ ההתקנה והעבר את תהליך ההתקנה</li>
+                      <li>הזן את פרטי ההתחברות שקיבלת ממנהל המערכת</li>
+                      <li>הפעל את התוכנה והתחל בניטור</li>
+                    </ol>
+                    <div class="alert alert-info">
+                      <i class="fas fa-shield-alt me-2"></i>
+                      <strong>הערה:</strong> התוכנה פועלת ברקע ואינה מפריעה
+                      לעבודה השוטפת במחשב.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Disclaimer Section -->
+            <div class="card mb-4">
+              <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                  <i class="fas fa-exclamation-triangle me-2"></i> הצהרת פרטיות
+                  והגבלת אחריות
+                </h5>
+              </div>
+              <div class="card-body disclaimer">
+                <p class="mb-2">
+                  השימוש במערכת KeyLogger זו הינו למטרות אבטחה ומחקר בלבד.
+                  המערכת אוספת נתוני הקלדות ומידע מהמחשבים המנוטרים.
+                </p>
+                <p class="mb-2">
+                  המשתמש מצהיר כי יש לו את כל האישורים וההרשאות הנדרשים לניטור
+                  המחשבים הרשומים במערכת.
+                </p>
+                <p class="mb-0">
+                  כל שימוש לא מורשה או בלתי חוקי במערכת אסור ועלול להוביל לצעדים
+                  משפטיים.
+                </p>
+              </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                  <i class="fas fa-star me-2"></i> יתרונות המערכת
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-chart-line text-primary me-2 mt-1"></i>
+                      <div>
+                        <h6>ניטור בזמן אמת</h6>
+                        <p class="text-muted small">
+                          צפייה בנתוני הקלדות בזמן אמת ממחשבים מרוחקים
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-shield-alt text-primary me-2 mt-1"></i>
+                      <div>
+                        <h6>אבטחה מתקדמת</h6>
+                        <p class="text-muted small">
+                          הצפנת נתונים ואבטחת מידע ברמה גבוהה
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-desktop text-primary me-2 mt-1"></i>
+                      <div>
+                        <h6>תמיכה בכל הפלטפורמות</h6>
+                        <p class="text-muted small">
+                          תמיכה ב-Windows, macOS ו-Linux
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                      <i class="fas fa-history text-primary me-2 mt-1"></i>
+                      <div>
+                        <h6>היסטוריית פעילות</h6>
+                        <p class="text-muted small">
+                          שמירת היסטוריית פעילות מלאה לצורכי תיעוד
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
