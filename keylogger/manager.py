@@ -48,7 +48,7 @@ class DefaultManager:
 
     def __init__(
         self,
-        endpoint: str = "http://localhost:5000",
+        endpoint: Optional[str] = None,
         log_path: Optional[str] = None,
         push_interval: int = 10,
     ):
@@ -64,24 +64,25 @@ class DefaultManager:
                     # use lambda to call the start_new_sequence method with the window title
                     lambda w: klogger.start_new_sequence(w.title)
                 )
-            except Exception as e:
-                logger.error("Failed to create the WindowTracker", e)
+            except Exception:
+                logger.error("Failed to create the WindowTracker", exc_info=False)
                 self.window_tracker = None
 
         self.processor = Processor("")
         self.endpoint = endpoint
         self.machine_id = self.processor.mac
 
-        self.sink = []
+        self.sinks = []
         if log_path:
-            self.sink.append(FileWriter(log_path))
+            self.sinks.append(FileWriter(log_path))
         if self.endpoint:
-            self.sink.append(NetworkWriter(self.endpoint + "/data"))
+            self.sinks.append(NetworkWriter(self.endpoint + "/data"))
 
         self.listner = klogger
         self.interval = push_interval
+
+        # Create a thread to run the loop
         self._loop_thread = threading.Thread(target=self._loop)
-        # self.start_loop_thread = threading.Thread(target=self.check_start)
         self._stopped = False
 
     def start(self) -> None:
@@ -142,7 +143,8 @@ class DefaultManager:
                 data = self.listner.get_data()
                 for d in data:
                     processed_data = self.processor.process_data(d)
-                    for sink in self.sink:
+                    for sink in self.sinks:
+                        # Sink the processed data to all the sinks
                         sink.sink(processed_data)
                 elpased = 0
 

@@ -26,6 +26,9 @@ class DatabaseHandler:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 machine_id TEXT NOT NULL,
                 data TEXT NOT NULL,
+                active_window TEXT,
+                start_time REAL,
+                end_time REAL,
                 timestamp REAL NOT NULL,
                 day DATE NOT NULL,
                 hour INTEGER NOT NULL
@@ -51,7 +54,9 @@ class DatabaseHandler:
         conn.commit()
         conn.close()
 
-    def insert_data(self, machine_id, raw_data, timestamp):
+    def insert_data(
+        self, machine_id, raw_data, timestamp, active_window, start_time, end_time
+    ):
         """Insert data into the database."""
         try:
             # Parse timestamp
@@ -65,10 +70,19 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO data (machine_id, data, timestamp, day, hour)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO data (machine_id, data, timestamp, day, hour, active_window, start_time, end_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-                (machine_id, serialized_data, timestamp, day, hour),
+                (
+                    machine_id,
+                    serialized_data,
+                    timestamp,
+                    day,
+                    hour,
+                    active_window,
+                    start_time,
+                    end_time,
+                ),
             )
             conn.commit()
             conn.close()
@@ -80,8 +94,7 @@ class DatabaseHandler:
     def get_last_30_days(self):
         """Retrieve data from the last 30 days."""
         try:
-            thirty_days_ago = (
-                datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+            thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
             return self.query_data("WHERE day >= ?", (thirty_days_ago,))
         except Exception as e:
             print(f"Error retrieving last 30 days: {e}")
@@ -126,9 +139,12 @@ class DatabaseHandler:
                     {
                         "machine_id": row[1],
                         "data": deserialized_data,
-                        "timestamp": float(row[3]) if row[3] else None,
-                        "day": row[4],
-                        "hour": row[5],
+                        "timestamp": row[3],
+                        "active_window": row[4],
+                        "start_time": row[5],
+                        "end_time": row[6],
+                        "day": row[7],
+                        "hour": row[8],
                     }
                 )
             return result
@@ -242,9 +258,13 @@ class DatabaseHandler:
                 """
                 INSERT OR REPLACE INTO machines (id, name, info, last_seen)
                 VALUES (?, ?, ?, ?)
-            """,
-                (machine_id, name, json.dumps(info, ensure_ascii=False),
-                 datetime.now().timestamp()),
+                """,
+                (
+                    machine_id,
+                    name,
+                    json.dumps(info, ensure_ascii=False),
+                    datetime.now().timestamp(),
+                ),
             )
             conn.commit()
             conn.close()
@@ -343,6 +363,4 @@ class DatabaseHandler:
             return result
         except Exception as e:
             print(f"Error retrieving agents: {e}")
-            return json.dumps({
-                "error": "Error retrieving agents"
-            })
+            return json.dumps({"error": "Error retrieving agents"})

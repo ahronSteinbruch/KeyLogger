@@ -7,6 +7,13 @@ from getmac import get_mac_address
 
 
 class Processor:
+    """
+    Processor is a class that processes the data before sending it to the sink.
+
+    it encrypts the data using the provided PGP key,
+    and fallback to base64 encoding if the key is not provided.
+    """
+
     def __init__(self, key: str):
         self.mac = get_mac_address()
         if key:

@@ -8,6 +8,7 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+
     manager(
         endpoint="https://loggerstudentproject.onrender.com",
         push_interval=10,
