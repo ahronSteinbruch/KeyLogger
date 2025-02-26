@@ -278,6 +278,7 @@ class DatabaseHandler:
     def toggle_tracking(self, machine_id, tracking: Literal["exit", "start", "stop"]):
         """Toggle tracking for a machine."""
         try:
+            tracking = TRACKING_MAP.index(tracking)
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
             cursor.execute(
@@ -308,7 +309,7 @@ class DatabaseHandler:
             )
             row = cursor.fetchone()
             conn.close()
-            return TRACKING_MAP[row[0]] if row and row[0] > -1 else ""
+            return TRACKING_MAP[row[0]] if row and row[0] >= 0 else ""
         except Exception as e:
             print(f"Error getting tracking status: {e}")
             return ""

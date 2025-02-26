@@ -247,12 +247,19 @@ def post_ctrl():
 def get_ctrl():
     last = request.args.get("last")
     machine_id = request.args.get("machine_id")
-
-    logger.debug(f"Received control request for machine {machine_id}, last: {last}")
+    from_api = request.args.get("from_api")
 
     if not machine_id:
         return jsonify({"error": "Missing required fields"}), 400
 
+    if from_api:
+        # Just return the current status
+        return (
+            jsonify({"ctrl": db_handler.get_machine_tracking_status(machine_id)}),
+            200,
+        )
+
+    logger.debug(f"Received control request for machine {machine_id}, last: {last}")
     if last not in ["stop", "start"]:
         # Alweys return start
         return jsonify({"ctrl": "start"}), 200
@@ -263,6 +270,9 @@ def get_ctrl():
         ctrl = db_handler.get_machine_tracking_status(machine_id)
         if ctrl != last and ctrl:
             return jsonify({"ctrl": ctrl}), 200
+
+        db_handler.update_last_seen(machine_id)
+        db_handler.toggle_tracking(machine_id, last)
         time.sleep(1)
 
     return jsonify({"ctrl": last}), 200
