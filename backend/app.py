@@ -243,7 +243,7 @@ def post_ctrl():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/ctrl", methods=["GET"])
+@app.route("/ctrl", methods=["GET"])
 def get_ctrl():
     last = request.args.get("last")
     machine_id = request.args.get("machine_id")
