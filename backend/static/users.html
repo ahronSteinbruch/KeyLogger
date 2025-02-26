@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KeyLogger - ניהול משתמשים</title>
+    <!-- Bootstrap RTL CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css"
+    />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-left: 12px;
+      }
+      .user-row {
+        transition: background-color 0.2s;
+      }
+      .user-row:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      .user-status {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 6px;
+      }
+      .user-status.active {
+        background-color: #198754;
+      }
+      .user-status.inactive {
+        background-color: #dc3545;
+      }
+      .action-btn {
+        color: #6c757d;
+        cursor: pointer;
+        transition: color 0.2s;
+        padding: 5px;
+      }
+      .action-btn:hover {
+        color: #0d6efd;
+      }
+      .action-btn.delete:hover {
+        color: #dc3545;
+      }
+      .password-toggle {
+        cursor: pointer;
+      }
+      .noselect {
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid py-3">
+      <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <h4>ניהול משתמשים</h4>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addUserModal"
+          >
+            <i class="fas fa-plus"></i> הוסף משתמש חדש
+          </button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div
+              class="card-header d-flex justify-content-between align-items-center"
+            >
+              <h5 class="mb-0">משתמשי המערכת</h5>
+              <div class="d-flex">
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    id="search-users"
+                    class="form-control"
+                    placeholder="חיפוש משתמש..."
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div id="users-loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">טוען...</span>
+                </div>
+                <p class="mt-2">טוען משתמשים...</p>
+              </div>
+
+              <div
+                id="users-empty"
+                class="text-center py-5"
+                style="display: none"
+              >
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4>אין משתמשים</h4>
+                <p class="text-muted">לחץ על 'הוסף משתמש חדש' כדי להתחיל</p>
+              </div>
+
+              <div
+                id="users-error"
+                class="text-center py-5"
+                style="display: none"
+              >
+                <i
+                  class="fas fa-exclamation-triangle fa-3x text-danger mb-3"
+                ></i>
+                <h4>שגיאה בטעינת משתמשים</h4>
+                <p class="text-muted">
+                  אירעה שגיאה בתקשורת עם השרת. נסה שוב מאוחר יותר.
+                </p>
+              </div>
+
+              <div id="users-table-container" style="display: none">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>משתמש</th>
+                        <th>שם תצוגה</th>
+                        <th>הרשאות</th>
+                        <th>נוצר בתאריך</th>
+                        <th>פעולות</th>
+                      </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                      <!-- משתמשים ייטענו דינמית -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">יומן פעילות משתמשים</h5>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>תאריך</th>
+                      <th>משתמש</th>
+                      <th>פעולה</th>
+                      <th>פרטים</th>
+                    </tr>
+                  </thead>
+                  <tbody id="activity-log">
+                    <!-- יומן פעילות ייטען דינמית -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">הוספת משתמש חדש</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="add-user-form">
+              <div class="mb-3">
+                <label for="new-user-id" class="form-label">שם משתמש</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="new-user-id"
+                  required
+                />
+                <div class="form-text">
+                  שם משתמש ייחודי לצורך התחברות למערכת
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="new-user-name" class="form-label">שם תצוגה</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="new-user-name"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label for="new-user-password" class="form-label">סיסמה</label>
+                <div class="input-group">
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="new-user-password"
+                    required
+                  />
+                  <span
+                    class="input-group-text password-toggle"
+                    onclick="togglePasswordVisibility('new-user-password')"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label d-block">הרשאות</label>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="new-user-role"
+                    id="role-user"
+                    value="user"
+                    checked
+                  />
+                  <label class="form-check-label" for="role-user"
+                    >משתמש רגיל</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="new-user-role"
+                    id="role-admin"
+                    value="admin"
+                  />
+                  <label class="form-check-label" for="role-admin"
+                    >מנהל מערכת</label
+                  >
+                </div>
+              </div>
+
+              <div class="alert alert-danger d-none" id="add-user-error"></div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ביטול
+            </button>
+            <button type="button" class="btn btn-primary" id="add-user-btn">
+              הוסף משתמש
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">עריכת משתמש</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-user-form">
+              <input type="hidden" id="edit-user-id" />
+
+              <div class="mb-3">
+                <label for="edit-user-name" class="form-label">שם תצוגה</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="edit-user-name"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label for="edit-user-password" class="form-label"
+                  >סיסמה חדשה</label
+                >
+                <div class="input-group">
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="edit-user-password"
+                  />
+                  <span
+                    class="input-group-text password-toggle"
+                    onclick="togglePasswordVisibility('edit-user-password')"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </span>
+                </div>
+                <div class="form-text">
+                  השאר ריק כדי לא לשנות את הסיסמה הנוכחית
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label d-block">הרשאות</label>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="edit-user-role"
+                    id="edit-role-user"
+                    value="user"
+                  />
+                  <label class="form-check-label" for="edit-role-user"
+                    >משתמש רגיל</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="edit-user-role"
+                    id="edit-role-admin"
+                    value="admin"
+                  />
+                  <label class="form-check-label" for="edit-role-admin"
+                    >מנהל מערכת</label
+                  >
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label d-block">סטטוס</label>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="edit-user-active"
+                  />
+                  <label class="form-check-label" for="edit-user-active"
+                    >משתמש פעיל</label
+                  >
+                </div>
+              </div>
+
+              <div class="alert alert-danger d-none" id="edit-user-error"></div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ביטול
+            </button>
+            <button type="button" class="btn btn-primary" id="save-user-btn">
+              שמור שינויים
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="deleteUserModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">מחיקת משתמש</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              האם אתה בטוח שברצונך למחוק את המשתמש
+              <strong id="delete-user-name"></strong>?
+            </p>
+            <p class="text-danger">פעולה זו אינה ניתנת לביטול.</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              id="confirm-delete-btn"
+            >
+              מחק משתמש
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/common.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // קבועים
+      let users = [];
+      let editingUserId = null;
+      let deletingUserId = null;
+
+      // גישה ל-API עם אימות
+      async function fetchAPI(endpoint, options = {}) {
+        const token = sessionStorage.getItem("authToken");
+
+        if (!token) {
+          window.location.href = "/login";
+          return null;
+        }
+
+        const defaultOptions = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        };
+
+        const fetchOptions = { ...defaultOptions, ...options };
+
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}${endpoint}`,
+            fetchOptions
+          );
+
+          if (response.status === 401) {
+            // פג תוקף הטוקן או שאינו תקף
+            sessionStorage.removeItem("authToken");
+            window.location.href = "/login";
+            return null;
+          }
+
+          if (response.status === 403) {
+            // אין הרשאות
+            alert("אין לך הרשאות מספיקות לביצוע פעולה זו");
+            return null;
+          }
+
+          return response;
+        } catch (error) {
+          console.error("API error:", error);
+          return null;
+        }
+      }
+
+      // טעינת משתמשים
+      async function loadUsers() {
+        // הצגת מסך טעינה
+        document.getElementById("users-loading").style.display = "block";
+        document.getElementById("users-empty").style.display = "none";
+        document.getElementById("users-error").style.display = "none";
+        document.getElementById("users-table-container").style.display = "none";
+
+        try {
+          // טעינת משתמשים
+          const response = await KeyLoggerAPI.fetchWithAuth("/api/agents");
+
+          if (!response || !response.ok) {
+            throw new Error("Failed to load users");
+          }
+
+          users = await response.json();
+
+          // הצגת המשתמשים
+          renderUsers(users);
+
+          // טעינת יומן פעילות
+          loadActivityLog();
+        } catch (error) {
+          console.error("Error loading users:", error);
+          document.getElementById("users-loading").style.display = "none";
+          document.getElementById("users-error").style.display = "block";
+        }
+      }
+
+      // הצגת משתמשים
+      function renderUsers(usersList, searchTerm = "") {
+        document.getElementById("users-loading").style.display = "none";
+
+        // סינון לפי חיפוש
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          usersList = usersList.filter(
+            (user) =>
+              user.name && String(user.name).toLowerCase().includes(term)
+          );
+        }
+
+        if (usersList.length === 0) {
+          document.getElementById("users-empty").style.display = "block";
+          document.getElementById("users-table-container").style.display =
+            "none";
+          return;
+        }
+
+        document.getElementById("users-empty").style.display = "none";
+        document.getElementById("users-table-container").style.display =
+          "block";
+
+        const tableBody = document.getElementById("users-table-body");
+        tableBody.innerHTML = "";
+
+        usersList.forEach((user) => {
+          const row = document.createElement("tr");
+          row.className = "user-row";
+
+          // קביעת האות הראשונה לאווטאר
+          const firstLetter = String(user.name || user.id)
+            .charAt(0)
+            .toUpperCase();
+
+          // סטטוס משתמש (לצורך הדגמה, נקבע אקראית)
+          const isActive = user.active !== false; // אם אין שדה active או אם ערכו true
+          const statusClass = isActive ? "active" : "inactive";
+          const statusText = isActive ? "פעיל" : "לא פעיל";
+
+          // תאריך יצירה (לצורך הדגמה, משתמשים בתאריך נוכחי)
+          const createdAt = new Date().toLocaleDateString();
+
+          // הרשאות משתמש (לצורך הדגמה)
+          const role = user.role || "user";
+          const roleBadgeClass = role === "admin" ? "bg-danger" : "bg-info";
+          const roleText = role === "admin" ? "מנהל מערכת" : "משתמש רגיל";
+
+          row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar">${firstLetter}</div>
+                            <div>
+                                <div class="fw-bold">${user.id}</div>
+                                <small class="text-muted d-flex align-items-center">
+                                    <span class="user-status ${statusClass}"></span>
+                                    ${statusText}
+                                </small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${user.name || "-"}</td>
+                    <td><span class="badge ${roleBadgeClass}">${roleText}</span></td>
+                    <td>${createdAt}</td>
+                    <td>
+                        <div class="d-flex">
+                            <span class="action-btn edit me-2" data-id="${
+                              user.id
+                            }" title="ערוך משתמש">
+                                <i class="fas fa-edit"></i>
+                            </span>
+                            <span class="action-btn delete" data-id="${
+                              user.id
+                            }" title="מחק משתמש">
+                                <i class="fas fa-trash-alt"></i>
+                            </span>
+                        </div>
+                    </td>
+                `;
+
+          tableBody.appendChild(row);
+        });
+
+        // הגדרת אירועי עריכה ומחיקה
+        document.querySelectorAll(".action-btn.edit").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const userId = this.getAttribute("data-id");
+            openEditModal(userId);
+          });
+        });
+
+        document.querySelectorAll(".action-btn.delete").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const userId = this.getAttribute("data-id");
+            openDeleteModal(userId);
+          });
+        });
+      }
+
+      // הוספת משתמש חדש
+      async function addUser() {
+        const userId = document.getElementById("new-user-id").value.trim();
+        const name = document.getElementById("new-user-name").value.trim();
+        const password = document.getElementById("new-user-password").value;
+        const role = document.querySelector(
+          'input[name="new-user-role"]:checked'
+        ).value;
+
+        const errorEl = document.getElementById("add-user-error");
+
+        // וידוא שדות חובה
+        if (!userId || !name || !password) {
+          errorEl.textContent = "יש למלא את כל שדות החובה";
+          errorEl.classList.remove("d-none");
+          return;
+        }
+
+        try {
+          // שליחת בקשה ליצירת משתמש
+          const response = await fetchAPI("/agent", {
+            method: "POST",
+            body: JSON.stringify({
+              id: userId,
+              name: name,
+              password: password,
+              role: role,
+            }),
+          });
+
+          if (!response || !response.ok) {
+            throw new Error(
+              response ? await response.text() : "Failed to create user"
+            );
+          }
+
+          // סגירת המודאל וטעינת משתמשים מחדש
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("addUserModal")
+          );
+          modal.hide();
+
+          // ניקוי טופס
+          document.getElementById("add-user-form").reset();
+          errorEl.classList.add("d-none");
+
+          // הוספת רשומה ליומן פעילות
+          addActivityLogEntry({
+            action: "create",
+            userId: userId,
+            details: `נוצר משתמש חדש: ${name} (${role})`,
+          });
+
+          // טעינת משתמשים מחדש
+          loadUsers();
+        } catch (error) {
+          console.error("Error adding user:", error);
+          errorEl.textContent = "שגיאה ביצירת משתמש: " + error.message;
+          errorEl.classList.remove("d-none");
+        }
+      }
+
+      // פתיחת מודאל עריכה
+      function openEditModal(userId) {
+        const user = users.find((u) => u.id === userId);
+        if (!user) return;
+
+        editingUserId = userId;
+
+        document.getElementById("edit-user-id").value = userId;
+        document.getElementById("edit-user-name").value = user.name || "";
+        document.getElementById("edit-user-password").value = "";
+
+        // הגדרת הרשאות
+        const role = user.role || "user";
+        if (role === "admin") {
+          document.getElementById("edit-role-admin").checked = true;
+        } else {
+          document.getElementById("edit-role-user").checked = true;
+        }
+
+        // הגדרת סטטוס
+        document.getElementById("edit-user-active").checked =
+          user.active !== false;
+
+        // הסתרת שגיאות קודמות
+        document.getElementById("edit-user-error").classList.add("d-none");
+
+        // פתיחת המודאל
+        const modal = new bootstrap.Modal(
+          document.getElementById("editUserModal")
+        );
+        modal.show();
+      }
+
+      // עדכון משתמש
+      async function updateUser() {
+        if (!editingUserId) return;
+
+        const name = document.getElementById("edit-user-name").value.trim();
+        const password = document.getElementById("edit-user-password").value;
+        const role = document.querySelector(
+          'input[name="edit-user-role"]:checked'
+        ).value;
+        const active = document.getElementById("edit-user-active").checked;
+
+        const errorEl = document.getElementById("edit-user-error");
+
+        // וידוא שם
+        if (!name) {
+          errorEl.textContent = "יש למלא שם תצוגה";
+          errorEl.classList.remove("d-none");
+          return;
+        }
+
+        try {
+          // שליחת בקשת עדכון
+          // הערה: האפיון הנוכחי של ה-API לא כולל נקודת קצה לעדכון משתמש,
+          // אז יש להתאים את הקריאה לפי המימוש בפועל
+          const response = await fetchAPI(`/agent/${editingUserId}`, {
+            method: "PUT", // או PATCH, תלוי במימוש ה-API
+            body: JSON.stringify({
+              name: name,
+              password: password || undefined, // שולח רק אם הוזן
+              role: role,
+              active: active,
+            }),
+          });
+
+          if (!response || !response.ok) {
+            throw new Error(
+              response ? await response.text() : "Failed to update user"
+            );
+          }
+
+          // סגירת המודאל וטעינת משתמשים מחדש
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("editUserModal")
+          );
+          modal.hide();
+
+          // הוספת רשומה ליומן פעילות
+          addActivityLogEntry({
+            action: "update",
+            userId: editingUserId,
+            details: `עודכן משתמש: ${name} (${role}, ${
+              active ? "פעיל" : "לא פעיל"
+            })`,
+          });
+
+          // טעינת משתמשים מחדש
+          loadUsers();
+        } catch (error) {
+          console.error("Error updating user:", error);
+          errorEl.textContent = "שגיאה בעדכון משתמש: " + error.message;
+          errorEl.classList.remove("d-none");
+        }
+      }
+
+      // פתיחת מודאל מחיקה
+      function openDeleteModal(userId) {
+        const user = users.find((u) => u.id === userId);
+        if (!user) return;
+
+        deletingUserId = userId;
+
+        document.getElementById("delete-user-name").textContent =
+          user.name || user.id;
+
+        // פתיחת המודאל
+        const modal = new bootstrap.Modal(
+          document.getElementById("deleteUserModal")
+        );
+        modal.show();
+      }
+
+      // מחיקת משתמש
+      async function deleteUser() {
+        if (!deletingUserId) return;
+
+        try {
+          // שליחת בקשת מחיקה
+          // הערה: האפיון הנוכחי של ה-API לא כולל נקודת קצה למחיקת משתמש,
+          // אז יש להתאים את הקריאה לפי המימוש בפועל
+          const response = await fetchAPI(`/agent/${deletingUserId}`, {
+            method: "DELETE",
+          });
+
+          if (!response || !response.ok) {
+            throw new Error(
+              response ? await response.text() : "Failed to delete user"
+            );
+          }
+
+          // סגירת המודאל
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("deleteUserModal")
+          );
+          modal.hide();
+
+          // הוספת רשומה ליומן פעילות
+          const user = users.find((u) => u.id === deletingUserId);
+          addActivityLogEntry({
+            action: "delete",
+            userId: deletingUserId,
+            details: `נמחק משתמש: ${
+              user ? user.name || user.id : deletingUserId
+            }`,
+          });
+
+          // טעינת משתמשים מחדש
+          loadUsers();
+        } catch (error) {
+          console.error("Error deleting user:", error);
+          alert("שגיאה במחיקת משתמש: " + error.message);
+        }
+      }
+
+      // טעינת יומן פעילות
+      function loadActivityLog() {
+        // הערה: האפיון הנוכחי של ה-API לא כולל נקודת קצה ליומן פעילות,
+        // אז בשלב ראשון נשתמש בנתונים מקומיים לדוגמה
+
+        const activityLog = [
+          {
+            timestamp: new Date(Date.now() - 3600000), // שעה אחת לפני הזמן הנוכחי
+            userId: "admin",
+            action: "login",
+            details: "התחברות למערכת",
+          },
+          {
+            timestamp: new Date(Date.now() - 7200000), // שעתיים לפני הזמן הנוכחי
+            userId: "admin",
+            action: "create",
+            details: "נוצר משתמש חדש: operator1 (user)",
+          },
+          {
+            timestamp: new Date(Date.now() - 86400000), // יום לפני הזמן הנוכחי
+            userId: "admin",
+            action: "update",
+            details: "עודכן משתמש: מפעיל ראשי (operator1, פעיל)",
+          },
+        ];
+
+        renderActivityLog(activityLog);
+      }
+
+      // הצגת יומן פעילות
+      function renderActivityLog(logs) {
+        const logContainer = document.getElementById("activity-log");
+        logContainer.innerHTML = "";
+
+        if (logs.length === 0) {
+          logContainer.innerHTML =
+            '<tr><td colspan="4" class="text-center">אין נתוני פעילות</td></tr>';
+          return;
+        }
+
+        logs.forEach((log) => {
+          const row = document.createElement("tr");
+
+          let actionIcon, actionClass;
+
+          switch (log.action) {
+            case "login":
+              actionIcon = "fa-sign-in-alt";
+              actionClass = "text-info";
+              break;
+            case "logout":
+              actionIcon = "fa-sign-out-alt";
+              actionClass = "text-secondary";
+              break;
+            case "create":
+              actionIcon = "fa-plus-circle";
+              actionClass = "text-success";
+              break;
+            case "update":
+              actionIcon = "fa-edit";
+              actionClass = "text-primary";
+              break;
+            case "delete":
+              actionIcon = "fa-trash-alt";
+              actionClass = "text-danger";
+              break;
+            default:
+              actionIcon = "fa-info-circle";
+              actionClass = "text-secondary";
+          }
+
+          row.innerHTML = `
+                    <td>${log.timestamp.toLocaleString()}</td>
+                    <td>${log.userId}</td>
+                    <td>
+                        <i class="fas ${actionIcon} ${actionClass}"></i>
+                        ${log.action}
+                    </td>
+                    <td>${log.details}</td>
+                `;
+
+          logContainer.appendChild(row);
+        });
+      }
+
+      // הוספת רשומה ליומן פעילות
+      function addActivityLogEntry(entry) {
+        // בהיעדר נקודת קצה API ליומן פעילות, נוסיף את הרשומה לטבלה מקומית
+
+        const timestamp = new Date();
+        const userId = "admin"; // או המשתמש המחובר כרגע
+
+        const logEntry = {
+          timestamp,
+          userId,
+          ...entry,
+        };
+
+        const logContainer = document.getElementById("activity-log");
+
+        // הוספת שורה חדשה בראש היומן
+        const row = document.createElement("tr");
+
+        let actionIcon, actionClass;
+
+        switch (logEntry.action) {
+          case "login":
+            actionIcon = "fa-sign-in-alt";
+            actionClass = "text-info";
+            break;
+          case "logout":
+            actionIcon = "fa-sign-out-alt";
+            actionClass = "text-secondary";
+            break;
+          case "create":
+            actionIcon = "fa-plus-circle";
+            actionClass = "text-success";
+            break;
+          case "update":
+            actionIcon = "fa-edit";
+            actionClass = "text-primary";
+            break;
+          case "delete":
+            actionIcon = "fa-trash-alt";
+            actionClass = "text-danger";
+            break;
+          default:
+            actionIcon = "fa-info-circle";
+            actionClass = "text-secondary";
+        }
+
+        row.innerHTML = `
+                <td>${timestamp.toLocaleString()}</td>
+                <td>${userId}</td>
+                <td>
+                    <i class="fas ${actionIcon} ${actionClass}"></i>
+                    ${logEntry.action}
+                </td>
+                <td>${logEntry.details}</td>
+            `;
+
+        // הסרת הודעת "אין נתוני פעילות" אם קיימת
+        if (logContainer.innerHTML.includes("אין נתוני פעילות")) {
+          logContainer.innerHTML = "";
+        }
+
+        // הוספת השורה בתחילת הטבלה
+        logContainer.insertBefore(row, logContainer.firstChild);
+      }
+
+      // הצגה/הסתרה של סיסמה
+      function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling.querySelector("i");
+
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      }
+
+      // אתחול בטעינת הדף
+      document.addEventListener("DOMContentLoaded", function () {
+        // טעינת משתמשים
+        loadUsers();
+
+        // הגדרת אירוע חיפוש
+        document
+          .getElementById("search-users")
+          .addEventListener("input", function () {
+            renderUsers(users, this.value);
+          });
+
+        // הגדרת אירוע הוספת משתמש
+        document
+          .getElementById("add-user-btn")
+          .addEventListener("click", addUser);
+
+        // הגדרת אירוע שמירת שינויי משתמש
+        document
+          .getElementById("save-user-btn")
+          .addEventListener("click", updateUser);
+
+        // הגדרת אירוע אישור מחיקת משתמש
+        document
+          .getElementById("confirm-delete-btn")
+          .addEventListener("click", deleteUser);
+
+        // הגדרת אירוע הגשת טופס בלחיצה על Enter
+        document
+          .getElementById("add-user-form")
+          .addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addUser();
+            }
+          });
+
+        document
+          .getElementById("edit-user-form")
+          .addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              updateUser();
+            }
+          });
+      });
+    </script>
+  </body>
+</html>

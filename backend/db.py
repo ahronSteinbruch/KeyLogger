@@ -1,9 +1,11 @@
 import hashlib
+import logging
 import sqlite3
 from datetime import datetime, timedelta
 import json
 from typing import Literal
 
+logger = logging.getLogger(__name__)
 
 TRACKING_MAP = ["exit", "start", "stop"]
 
@@ -26,6 +28,9 @@ class DatabaseHandler:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 machine_id TEXT NOT NULL,
                 data TEXT NOT NULL,
+                active_window TEXT,
+                start_time REAL,
+                end_time REAL,
                 timestamp REAL NOT NULL,
                 day DATE NOT NULL,
                 hour INTEGER NOT NULL
@@ -33,6 +38,7 @@ class DatabaseHandler:
                        
             CREATE TABLE IF NOT EXISTS agents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                is_admin INTEGER NOT NULL DEFAULT 0,
                 name TEXT NOT NULL,
                 hash TEXT NOT NULL
             );
@@ -40,7 +46,7 @@ class DatabaseHandler:
             CREATE TABLE IF NOT EXISTS machines (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                tracking INTEGER NOT NULL,
+                tracking INTEGER NOT NULL DEFAULT -1,
                 info TEXT,
                 last_seen REAL NOT NULL
             );
@@ -50,7 +56,9 @@ class DatabaseHandler:
         conn.commit()
         conn.close()
 
-    def insert_data(self, machine_id, raw_data, timestamp):
+    def insert_data(
+        self, machine_id, raw_data, timestamp, active_window, start_time, end_time
+    ):
         """Insert data into the database."""
         try:
             # Parse timestamp
@@ -64,10 +72,19 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO data (machine_id, data, timestamp, day, hour)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO data (machine_id, data, timestamp, day, hour, active_window, start_time, end_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-                (machine_id, serialized_data, timestamp, day, hour),
+                (
+                    machine_id,
+                    serialized_data,
+                    timestamp,
+                    day,
+                    hour,
+                    active_window,
+                    start_time,
+                    end_time,
+                ),
             )
             conn.commit()
             conn.close()
@@ -108,7 +125,8 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 f"""
-                SELECT * FROM data {condition}
+                SELECT id, data, timestamp, active_window, start_time, end_time, machine_id
+                FROM data {condition}
             """,
                 params,
             )
@@ -118,19 +136,22 @@ class DatabaseHandler:
             # Format response
             result = []
             for row in rows:
-                deserialized_data = json.loads(row[2])  # Deserialize the data field
+                # Deserialize the data field
+                deserialized_data = json.loads(row[1])
                 result.append(
                     {
-                        "machine_id": row[1],
+                        "id": row[0],
                         "data": deserialized_data,
-                        "timestamp": float(row[3]) if row[3] else None,
-                        "day": row[4],
-                        "hour": row[5],
+                        "timestamp": row[2],
+                        "active_window": row[3],
+                        "start_time": row[4],
+                        "end_time": row[5],
+                        "machine_id": row[6],
                     }
                 )
             return result
         except Exception as e:
-            print(f"Error querying data: {e}")
+            logger.error(f"Error querying data: {e}")
             return []
 
     def check_agent_password(self, id, password) -> bool:
@@ -156,7 +177,27 @@ class DatabaseHandler:
             print(f"Error checking agent password: {e}")
             return False
 
-    def create_agent(self, id, name, password) -> bool:
+    def check_is_admin(self, id) -> bool:
+        """Check if the agent is an admin."""
+
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT is_admin FROM agents WHERE id = ?
+            """,
+                (id,),
+            )
+            row = cursor.fetchone()
+            conn.close()
+
+            return row[0] == 1
+        except Exception as e:
+            print(f"Error checking agent is admin: {e}")
+            return False
+
+    def create_or_update_agent(self, id, name, password, admin: bool = False) -> bool:
         """Create a new agent in the database."""
 
         try:
@@ -167,10 +208,10 @@ class DatabaseHandler:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO agents (id, name, hash)
-                VALUES (?, ?, ?)
-            """,
-                (id, name, hash),
+                INSERT OR REPLACE INTO agents (id, name, hash, is_admin)
+                VALUES (?, ?, ?, ?)
+                """,
+                (id, name, hash, 1 if admin else 0),
             )
             conn.commit()
             conn.close()
@@ -201,7 +242,7 @@ class DatabaseHandler:
                         "id": row[0],
                         "name": row[1],
                         "tracking": row[2],
-                        "info": row[3],
+                        "info": json.loads(row[3]) if row[3] else {},
                         "last_seen": row[4],
                     }
                 )
@@ -218,9 +259,14 @@ class DatabaseHandler:
             cursor.execute(
                 """
                 INSERT OR REPLACE INTO machines (id, name, info, last_seen)
-                VALUES (?, ?, ?, ?, ?)
-            """,
-                (machine_id, name, info, datetime.now().timestamp()),
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    machine_id,
+                    name,
+                    json.dumps(info, ensure_ascii=False),
+                    datetime.now().timestamp(),
+                ),
             )
             conn.commit()
             conn.close()
@@ -232,6 +278,7 @@ class DatabaseHandler:
     def toggle_tracking(self, machine_id, tracking: Literal["exit", "start", "stop"]):
         """Toggle tracking for a machine."""
         try:
+            tracking = TRACKING_MAP.index(tracking)
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
             cursor.execute(
@@ -249,7 +296,7 @@ class DatabaseHandler:
 
     def get_machine_tracking_status(
         self, machine_id
-    ) -> Literal["exit", "start", "stop"]:
+    ) -> Literal["exit", "start", "stop", ""]:
         """Get the tracking status for a machine."""
         try:
             conn = sqlite3.connect(self.db_name)
@@ -262,10 +309,10 @@ class DatabaseHandler:
             )
             row = cursor.fetchone()
             conn.close()
-            return TRACKING_MAP[row[0]] if row else "exit"
+            return TRACKING_MAP[row[0]] if row and row[0] >= 0 else ""
         except Exception as e:
             print(f"Error getting tracking status: {e}")
-            return "exit"
+            return ""
 
     def update_last_seen(self, machine_id):
         """Update the last seen timestamp for a machine."""
@@ -319,6 +366,17 @@ class DatabaseHandler:
             return result
         except Exception as e:
             print(f"Error retrieving agents: {e}")
-            return json.dumps({
-                "error": "Error retrieving agents"
-            })
+            return json.dumps({"error": "Error retrieving agents"})
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 4:
+        print("Usage: python db.py <db_path> <username> <password>")
+        sys.exit(1)
+
+    username, password = sys.argv[2], sys.argv[3]
+    db_handler = DatabaseHandler(sys.argv[1])
+    db_handler.create_or_update_agent(username, username, password, admin=True)
+    print(f"Agent {username} created successfully.")
