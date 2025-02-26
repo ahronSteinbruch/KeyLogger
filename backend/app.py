@@ -318,6 +318,14 @@ def send_css(path):
     return app.send_static_file("css/" + path)
 
 
+@app.route("/download/<os_name>", methods=["GET"])
+def download_agent(os_name):
+    if url := os.getenv(f"AGENT_DOWNLOAD_URL{os_name.upper()}"):
+        return redirect(url)
+
+    return jsonify({"error": "Download URL not found"}), 404
+
+
 # Run the Flask app
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
