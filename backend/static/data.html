@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KeyLogger - צפייה בנתונים</title>
+    <!-- Bootstrap RTL CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css"
+    />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- DatePicker CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css"
+    />
+    <!-- Page specific CSS -->
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/data.css" />
+  </head>
+  <body>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">טוען...</span>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="sidebar col-md-3 col-lg-2 d-md-block collapse" id="sidebar">
+          <div class="logo-container">
+            <i class="fas fa-keyboard fa-2x"></i>
+            <h4 class="mt-2">KeyLogger</h4>
+          </div>
+          <div class="d-flex flex-column p-3">
+            <small class="text-muted mb-2"
+              >שלום, <span id="user-name">משתמש</span></small
+            >
+            <ul class="nav nav-pills flex-column">
+              <li class="nav-item">
+                <a class="nav-link" id="dashboard-link" href="/dashboard">
+                  <i class="fas fa-tachometer-alt"></i>
+                  דשבורד
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="machines-link" href="/machines">
+                  <i class="fas fa-desktop"></i>
+                  מחשבים
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" id="data-link" href="/logs">
+                  <i class="fas fa-database"></i>
+                  נתונים שנאספו
+                </a>
+              </li>
+              <li class="nav-item admin-only">
+                <a class="nav-link" id="users-link" href="/users">
+                  <i class="fas fa-users"></i>
+                  ניהול משתמשים
+                </a>
+              </li>
+              <li class="nav-item mt-auto">
+                <a class="nav-link" id="logout-link" href="#">
+                  <i class="fas fa-sign-out-alt"></i>
+                  התנתקות
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 content-wrapper">
+          <nav class="navbar navbar-expand-md navbar-light bg-light">
+            <div class="container-fluid">
+              <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#sidebar"
+                title="תפריט צד"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <h5 class="navbar-brand mb-0">
+                <span id="current-page-title">נתונים שנאספו</span>
+              </h5>
+              <div class="d-flex">
+                <span id="last-update" class="text-muted small me-3"></span>
+              </div>
+            </div>
+          </nav>
+
+          <div class="container py-4">
+            <!-- חיפוש ופילטרים -->
+            <div class="data-card mb-4">
+              <div class="card-toolbar">
+                <h5><i class="fas fa-filter me-2"></i> חיפוש וסינון נתונים</h5>
+                <button
+                  id="clear-filters"
+                  class="btn btn-sm btn-outline-secondary"
+                >
+                  <i class="fas fa-undo"></i> נקה סינון
+                </button>
+              </div>
+              <div class="filters-container">
+                <div class="row">
+                  <div class="col-md-3 mb-3">
+                    <label for="machine-filter" class="form-label">מחשב</label>
+                    <select id="machine-filter" class="form-select">
+                      <option value="">כל המחשבים</option>
+                      <!-- אפשרויות ייטענו דינמית -->
+                    </select>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <label for="date-from" class="form-label">החל מתאריך</label>
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="fas fa-calendar"></i
+                      ></span>
+                      <input
+                        type="text"
+                        id="date-from"
+                        class="form-control datepicker"
+                        placeholder="בחר תאריך"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <label for="date-to" class="form-label">עד תאריך</label>
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="fas fa-calendar"></i
+                      ></span>
+                      <input
+                        type="text"
+                        id="date-to"
+                        class="form-control datepicker"
+                        placeholder="בחר תאריך"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="col-md-3 mb-3">
+                    <label for="text-search" class="form-label"
+                      >חיפוש טקסט</label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="fas fa-search"></i
+                      ></span>
+                      <input
+                        type="text"
+                        id="text-search"
+                        class="form-control"
+                        placeholder="חיפוש חופשי..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-12 text-center">
+                    <button id="apply-filters" class="btn btn-primary px-4">
+                      <i class="fas fa-filter"></i> החל סינון
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- תצוגת נתונים -->
+            <div class="data-card">
+              <div class="card-toolbar">
+                <h5><i class="fas fa-database me-2"></i> נתונים שנאספו</h5>
+                <div class="dropdown">
+                  <button
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    id="exportDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i class="fas fa-download"></i> ייצוא
+                  </button>
+                  <ul
+                    class="dropdown-menu dropdown-menu-end"
+                    aria-labelledby="exportDropdown"
+                  >
+                    <li>
+                      <a class="dropdown-item" id="export-csv" href="#"
+                        ><i class="fas fa-file-csv me-2"></i>CSV</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" id="export-json" href="#"
+                        ><i class="fas fa-file-code me-2"></i>JSON</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" id="export-txt" href="#"
+                        ><i class="fas fa-file-alt me-2"></i>טקסט</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- מסך טעינה -->
+              <div id="data-loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">טוען...</span>
+                </div>
+                <p class="mt-2">טוען נתונים...</p>
+              </div>
+
+              <!-- אין נתונים -->
+              <div
+                id="data-empty"
+                class="text-center py-5"
+                style="display: none"
+              >
+                <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                <h4>אין נתונים זמינים</h4>
+                <p class="text-muted">נסה לשנות את הגדרות הסינון</p>
+              </div>
+
+              <!-- שגיאה בטעינה -->
+              <div
+                id="data-error"
+                class="text-center py-5"
+                style="display: none"
+              >
+                <i
+                  class="fas fa-exclamation-triangle fa-3x text-danger mb-3"
+                ></i>
+                <h4>שגיאה בטעינת נתונים</h4>
+                <p class="text-muted">
+                  אירעה שגיאה בתקשורת עם השרת. נסה שוב מאוחר יותר.
+                </p>
+                <button class="btn btn-primary mt-2" id="error-refresh-btn">
+                  <i class="fas fa-sync-alt"></i> נסה שנית
+                </button>
+              </div>
+
+              <!-- תצוגת נתונים מורחבת -->
+              <div id="data-container" style="display: none">
+                <div class="log-entries-container" id="log-entries">
+                  <!-- נתונים ייטענו דינמית -->
+                </div>
+
+                <!-- כפתורי שליטה -->
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    id="expand-all-btn"
+                    title="הרחב את כל הרשומות"
+                  >
+                    <i class="fas fa-chevron-down"></i> הרחב הכל
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    id="collapse-all-btn"
+                    title="כווץ את כל הרשומות"
+                  >
+                    <i class="fas fa-chevron-up"></i> כווץ הכל
+                  </button>
+                  <div class="btn-group ms-3" role="group">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary active"
+                      id="view-readable-btn"
+                      title="הצג טקסט משוחזר"
+                    >
+                      <i class="fas fa-align-left"></i> טקסט קריא
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      id="view-raw-btn"
+                      title="הצג הקשות גולמיות"
+                    >
+                      <i class="fas fa-keyboard"></i> הקשות גולמיות
+                    </button>
+                  </div>
+                </div>
+
+                <!-- דפדוף -->
+                <div class="pagination-container">
+                  <div class="page-info">
+                    מציג <span id="items-range">0-0</span> מתוך
+                    <span id="total-items">0</span> רשומות
+                  </div>
+                  <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0" id="pagination">
+                      <!-- דפים ייטענו דינמית -->
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Modal -->
+    <div class="modal fade" id="dataViewModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">צפייה בנתונים</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-4">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3"
+              >
+                <div class="d-flex align-items-center">
+                  <div class="machine-icon-small me-2" id="modal-machine-icon">
+                    <i class="fas fa-desktop"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0" id="modal-machine-id">שם מחשב</h6>
+                    <small class="text-muted" id="modal-machine-code"
+                      >קוד מחשב</small
+                    >
+                  </div>
+                </div>
+                <span class="badge bg-secondary" id="modal-timestamp"
+                  >תאריך</span
+                >
+              </div>
+
+              <ul class="nav nav-tabs mb-3" id="modal-data-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button
+                    class="nav-link active"
+                    id="readable-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#readable-content"
+                    type="button"
+                    role="tab"
+                    aria-controls="readable-content"
+                    aria-selected="true"
+                  >
+                    <i class="fas fa-align-left"></i> טקסט קריא
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button
+                    class="nav-link"
+                    id="raw-tab"
+                    data-bs-toggle="tab"
+                    data-bs-target="#raw-content"
+                    type="button"
+                    role="tab"
+                    aria-controls="raw-content"
+                    aria-selected="false"
+                  >
+                    <i class="fas fa-keyboard"></i> הקשות גולמיות
+                  </button>
+                </li>
+              </ul>
+
+              <div class="tab-content mb-3">
+                <div
+                  class="tab-pane fade show active"
+                  id="readable-content"
+                  role="tabpanel"
+                  aria-labelledby="readable-tab"
+                >
+                  <div class="card">
+                    <div
+                      class="card-header d-flex justify-content-between align-items-center"
+                    >
+                      <h6 class="mb-0">טקסט משוחזר</h6>
+                      <div>
+                        <button
+                          id="readable-copy-btn"
+                          class="btn btn-sm btn-outline-secondary"
+                        >
+                          <i class="fas fa-copy"></i> העתק
+                        </button>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div
+                        id="modal-readable-content"
+                        class="readable-text p-2 bg-light rounded"
+                        style="max-height: 400px; overflow-y: auto"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="tab-pane fade"
+                  id="raw-content"
+                  role="tabpanel"
+                  aria-labelledby="raw-tab"
+                >
+                  <div class="card">
+                    <div
+                      class="card-header d-flex justify-content-between align-items-center"
+                    >
+                      <h6 class="mb-0">הקשות גולמיות</h6>
+                      <div>
+                        <button
+                          id="raw-copy-btn"
+                          class="btn btn-sm btn-outline-secondary"
+                        >
+                          <i class="fas fa-copy"></i> העתק
+                        </button>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <pre
+                        id="modal-data-content"
+                        class="p-2 bg-light rounded"
+                        style="max-height: 400px; overflow-y: auto"
+                      ></pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h6>ניתוח תוכן</h6>
+              <div id="modal-data-analysis">
+                <!-- כאן יופיע ניתוח של הטקסט (למשל, כמות תווים, מילים וכו') -->
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a
+              href="#"
+              id="modal-view-machine"
+              class="btn btn-outline-primary me-auto"
+            >
+              <i class="fas fa-desktop me-1"></i> צפה בפרטי המחשב
+            </a>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              סגור
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="notification-toast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <i id="toast-icon" class="fas fa-info-circle me-2"></i>
+          <strong class="me-auto" id="toast-title">הודעה</strong>
+          <small id="toast-time">עכשיו</small>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body" id="toast-message">תוכן ההודעה</div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.he.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/data.js"></script>
+  </body>
+</html>

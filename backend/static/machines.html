@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KeyLogger - ניהול מחשבים</title>
+    <!-- Bootstrap RTL CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.rtl.min.css"
+    />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Page specific CSS -->
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/machines.css" />
+  </head>
+  <body>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">טוען...</span>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar - אין לשנות -->
+        <div class="sidebar col-md-3 col-lg-2 d-md-block collapse" id="sidebar">
+          <div class="logo-container">
+            <i class="fas fa-keyboard fa-2x"></i>
+            <h4 class="mt-2">KeyLogger</h4>
+          </div>
+          <div class="d-flex flex-column p-3">
+            <small class="text-muted mb-2"
+              >שלום, <span id="user-name">משתמש</span></small
+            >
+            <ul class="nav nav-pills flex-column">
+              <li class="nav-item">
+                <a class="nav-link" id="dashboard-link" href="dashboard.html">
+                  <i class="fas fa-tachometer-alt"></i>
+                  דשבורד
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link active"
+                  id="machines-link"
+                  href="machines.html"
+                >
+                  <i class="fas fa-desktop"></i>
+                  מחשבים
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="data-link" href="data.html">
+                  <i class="fas fa-database"></i>
+                  נתונים שנאספו
+                </a>
+              </li>
+              <li class="nav-item admin-only">
+                <a class="nav-link" id="users-link" href="users.html">
+                  <i class="fas fa-users"></i>
+                  ניהול משתמשים
+                </a>
+              </li>
+              <li class="nav-item mt-auto">
+                <a class="nav-link" id="logout-link" href="#">
+                  <i class="fas fa-sign-out-alt"></i>
+                  התנתקות
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 content-wrapper">
+          <nav class="navbar navbar-expand-md navbar-light">
+            <div class="container-fluid">
+              <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#sidebar"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <h5 class="navbar-brand mb-0">
+                <span id="current-page-title">ניהול מחשבים</span>
+              </h5>
+              <div class="d-flex">
+                <span id="last-update" class="text-muted small me-3"></span>
+              </div>
+            </div>
+          </nav>
+
+          <div class="container py-4">
+            <!-- חיפוש ופילטרים -->
+            <div class="search-container mb-4">
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="fas fa-search"></i
+                ></span>
+                <input
+                  type="text"
+                  id="machine-search"
+                  class="form-control"
+                  placeholder="חיפוש מחשב לפי שם או מזהה..."
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="refresh-machines"
+                >
+                  <i class="fas fa-sync-alt"></i> רענן
+                </button>
+              </div>
+            </div>
+
+            <!-- כפתורי סינון -->
+            <div class="filter-buttons text-center">
+              <div class="btn-group" role="group">
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="status-filter"
+                  id="all-machines"
+                  checked
+                />
+                <label class="btn btn-outline-secondary" for="all-machines"
+                  >כל המחשבים</label
+                >
+
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="status-filter"
+                  id="running-machines"
+                />
+                <label class="btn btn-outline-success" for="running-machines"
+                  >פעילים</label
+                >
+
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="status-filter"
+                  id="stopped-machines"
+                />
+                <label class="btn btn-outline-danger" for="stopped-machines"
+                  >מושבתים</label
+                >
+              </div>
+            </div>
+
+            <!-- מחשבים בטעינה -->
+            <div id="machines-loading" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">טוען...</span>
+              </div>
+              <p class="mt-3">טוען רשימת מחשבים...</p>
+            </div>
+
+            <!-- הודעת שגיאה -->
+            <div
+              id="machines-error"
+              class="alert alert-danger text-center py-4"
+              style="display: none"
+            >
+              <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+              <h4>שגיאה בטעינת מחשבים</h4>
+              <p>אירעה שגיאה בתקשורת עם השרת. נסה לרענן את הדף.</p>
+              <button class="btn btn-primary mt-2" id="error-refresh-btn">
+                <i class="fas fa-sync-alt"></i> נסה שנית
+              </button>
+            </div>
+
+            <!-- אין מחשבים -->
+            <div
+              id="no-machines"
+              class="text-center py-5"
+              style="display: none"
+            >
+              <i class="fas fa-desktop fa-3x text-muted mb-3"></i>
+              <h4>אין מחשבים זמינים</h4>
+              <p class="text-muted">לא נמצאו מחשבים רשומים במערכת</p>
+            </div>
+
+            <!-- רשימת כרטיסי מחשבים -->
+            <div
+              id="machines-grid"
+              class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- מודאל פרטי מחשב -->
+    <div class="modal fade" id="machineModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal-machine-title">פרטי מחשב</h5>
+            <span id="modal-status-badge" class="badge status-badge"
+              >סטטוס</span
+            >
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="detail-group">
+                  <div class="detail-label">מזהה מחשב</div>
+                  <div class="detail-value" id="detail-machine-id"></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-group">
+                  <div class="detail-label">שם מחשב</div>
+                  <div class="detail-value" id="detail-pc-name"></div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="detail-group">
+                  <div class="detail-label">מערכת הפעלה</div>
+                  <div class="detail-value" id="detail-os"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-group">
+                  <div class="detail-label">מעבד</div>
+                  <div class="detail-value" id="detail-processor"></div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-group">
+                  <div class="detail-label">זיכרון</div>
+                  <div class="detail-value" id="detail-memory"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-group">
+              <div class="detail-label">משתמשים פעילים</div>
+              <div class="detail-value" id="detail-users"></div>
+            </div>
+
+            <div class="card mb-3">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
+                <h6 class="mb-0">שליטה</h6>
+                <div id="control-status" class="badge bg-secondary">
+                  לא ידוע
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="btn btn-success" id="control-start">
+                    <i class="fas fa-play me-1"></i> התחל ניטור
+                  </button>
+                  <button class="btn btn-danger" id="control-stop">
+                    <i class="fas fa-stop me-1"></i> הפסק ניטור
+                  </button>
+                  <button class="btn btn-secondary" id="control-exit">
+                    <i class="fas fa-power-off me-1"></i> סגור תוכנה
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- דיסקים -->
+            <div class="card mb-3">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
+                <h6 class="mb-0"><i class="fas fa-hdd me-2"></i>דיסקים</h6>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>נקודת עיגון</th>
+                        <th>סוג מערכת קבצים</th>
+                        <th>שטח כולל</th>
+                        <th>שטח פנוי</th>
+                        <th>ניצולת</th>
+                      </tr>
+                    </thead>
+                    <tbody id="disks-table-body">
+                      <tr>
+                        <td colspan="5" class="text-center py-3">
+                          <div
+                            class="spinner-border spinner-border-sm text-primary me-2"
+                            role="status"
+                          >
+                            <span class="visually-hidden">טוען...</span>
+                          </div>
+                          טוען נתוני דיסקים...
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- כרטיסי רשת -->
+            <div class="card mb-3">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
+                <h6 class="mb-0">
+                  <i class="fas fa-network-wired me-2"></i>כרטיסי רשת
+                </h6>
+              </div>
+              <div class="card-body" id="network-adapters-container">
+                <div class="text-center py-3">
+                  <div
+                    class="spinner-border spinner-border-sm text-primary me-2"
+                    role="status"
+                  >
+                    <span class="visually-hidden">טוען...</span>
+                  </div>
+                  טוען נתוני רשת...
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0">נתונים אחרונים</h6>
+              </div>
+              <div class="card-body">
+                <div id="recent-data-list">
+                  <p class="text-center text-muted">טוען נתונים אחרונים...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <a href="#" id="view-all-data" class="btn btn-primary me-auto"
+              ><i class="fas fa-table me-1"></i> צפה בכל הנתונים</a
+            >
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              סגור
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="confirmationModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmationTitle">אישור פעולה</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="confirmationMessage">
+            האם אתה בטוח שברצונך לבצע פעולה זו?
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ביטול
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="confirmationConfirm"
+            >
+              אישור
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="notification-toast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <i id="toast-icon" class="fas fa-info-circle me-2"></i>
+          <strong class="me-auto" id="toast-title">הודעה</strong>
+          <small id="toast-time">עכשיו</small>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body" id="toast-message">תוכן ההודעה</div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/machines.js"></script>
+  </body>
+</html>
