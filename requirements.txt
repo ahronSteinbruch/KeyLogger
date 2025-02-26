@@ -4,5 +4,6 @@ pynput # for keyboard input, mainly on linux
 pgpy
 keyboard
 getmac
+PyJWT
 flask-cors
 psutil

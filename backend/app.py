@@ -4,18 +4,47 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta
 from db import DatabaseHandler
-
+import jwt  # Install PyJWT:
+from functools import wraps
 app = Flask(__name__)
 cors = CORS(app)
+# Secret key for JWT (store this securely, e.g., in environment variables)
+SECRET_KEY = "code_kode daf hayomi"
 # Initialize Database Handler
-
 db_handler = DatabaseHandler("data.db")
 
 logger = logging.getLogger(__name__)
 
 LONG_POLLING_TIMEOUT = 30
 
+# Middleware to validate JWT tokens
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
 
+        # Check if the Authorization header is present
+        if "Authorization" in request.headers:
+            auth_header = request.headers["Authorization"]
+            if auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+
+        if not token:
+            return jsonify({"error": "Token is missing!"}), 401
+
+        try:
+            # Decode and verify the token
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            request.user_id = payload.get("user_id")  # Attach user ID to the request
+            request.is_admin = payload.get("is_admin", False)  # Attach admin status
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token has expired!"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token!"}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated
 # POST endpoint to receive data
 @app.route("/data", methods=["POST"])
 def receive_data():
@@ -43,9 +72,9 @@ def receive_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 # GET endpoint to retrieve the last 30 days of data
 @app.route("/data", methods=["GET"])
+@token_required
 def get_last_30_days():
     try:
         data = db_handler.get_last_30_days()
@@ -56,6 +85,7 @@ def get_last_30_days():
 
 # GET endpoint to retrieve data for a specific machine
 @app.route("/data/<machine_id>", methods=["GET"])
+@token_required
 def get_data_by_machine(machine_id):
     try:
         data = db_handler.get_data_by_machine(machine_id)
@@ -66,6 +96,7 @@ def get_data_by_machine(machine_id):
 
 # GET endpoint to retrieve data for a specific day
 @app.route("/data/day/<day>", methods=["GET"])
+@token_required
 def get_data_by_day(day):
     try:
         data = db_handler.get_data_by_day(day)
@@ -75,6 +106,7 @@ def get_data_by_day(day):
 
 
 @app.route('/agents', methods=['GET'])
+@token_required
 def get_agents():
     try:
         agents = db_handler.get_agents()
@@ -84,17 +116,16 @@ def get_agents():
 
 
 @app.route('/', methods=['GET'])
+@token_required
 def geter():
     return "hello agent 007 :)"
 
 
 @app.route("/login", methods=["POST"])
-def login():  # Login endpoint to authenticate user
+def login():
     try:
-        # Check if the request contains JSON
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
-
         # Parse the JSON data
         data = request.json
         user_id = data.get("user_id")
@@ -103,17 +134,24 @@ def login():  # Login endpoint to authenticate user
         # Val user_id ate fields
         if not all([user_id, password]):
             return jsonify({"error": "Missing required fields"}), 400
-
-        # Dummy check for demonstration purposes
+        # Authenticate the user (dummy check for demonstration purposes)
         if db_handler.check_agent_password(user_id, password):
-            return jsonify({"message": "Login successful"}), 200
+            # Create a JWT token
+            token_payload = {
+                "user_id": user_id,
+                "is_admin": db_handler.check_is_admin(user_id),  # Replace with actual admin check logic
+                "exp": (datetime.utcnow() + timedelta(hours=1)).timestamp()  # Correct usage
+            }
+            token = jwt.encode(token_payload, SECRET_KEY, algorithm="HS256")
+
+            return jsonify({"message": "Login successful", "token": token}), 200
         else:
-            return jsonify({"error": "Invaluser_id credentials"}), 401
+            return jsonify({"error": "Invalid credentials"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/machine', methods=['POST'])
+@token_required
 def machine():
     try:
         # Check if the request contains JSON
@@ -132,6 +170,7 @@ def machine():
 
 
 @app.route('/agent', methods=['POST'])
+@token_required
 def agent():
     try:
         # Check if the request contains JSON
@@ -150,6 +189,7 @@ def agent():
 
 
 @app.route("/ctrl", methods=["POST"])
+@token_required
 def post_ctrl():
     try:
         # Check if the request contains JSON
@@ -176,6 +216,7 @@ def post_ctrl():
 
 
 @app.route("/ctrl", methods=["GET"])
+@token_required
 def get_ctrl():
     last = request.args.get("last")
     machine_id = request.args.get("machine_id")
