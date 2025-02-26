@@ -7,7 +7,7 @@ from db import DatabaseHandler
 import jwt
 from functools import wraps
 import os
-from random import random
+from random import choice
 import string
 
 app = Flask(__name__, static_url_path="", static_folder="static")
@@ -15,7 +15,7 @@ cors = CORS(app)
 
 # Secret key for JWT from env, fallback to random string
 SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY", "".join([random.choice(string.ascii_letters) for _ in range(20)])
+    "JWT_SECRET_KEY", "".join([choice(string.ascii_letters) for _ in range(20)])
 )
 
 
