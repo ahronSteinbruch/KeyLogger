@@ -5,3 +5,5 @@ pgpy
 keyboard
 getmac
 PyJWT
+flask-cors
+psutil
