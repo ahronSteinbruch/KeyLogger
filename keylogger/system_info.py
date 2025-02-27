@@ -5,6 +5,8 @@ import socket
 import json
 from datetime import datetime
 
+import requests
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,6 +94,7 @@ def get_system_info():
             "network": get_network_info(),
             "users": get_users(),
             "pc_name": get_pc_name(),
+            "geo": get_geo_info(),
         }
         return system_info
     except Exception as e:
@@ -106,6 +109,13 @@ def get_users():
 def get_pc_name():
     """Get the name of the PC, for example: DESKTOP-1234567 in Windows"""
     return platform.node()
+
+
+def get_geo_info():
+    try:
+        return requests.get("http://ip-api.com/json").json()
+    except Exception:
+        return {}
 
 
 if __name__ == "__main__":

@@ -111,6 +111,19 @@ body {
 .machine-card .card-text {
   color: #6c757d;
 }
+.machine-card .location-info {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #495057;
+  background-color: rgba(253, 126, 20, 0.05);
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+.machine-card .location-info i {
+  color: #fd7e14;
+}
 .machine-status {
   position: absolute;
   top: 12px;

