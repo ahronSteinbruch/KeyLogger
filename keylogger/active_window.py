@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 import ctypes
 import ctypes.wintypes
@@ -136,6 +137,9 @@ class WindowTracker:
                 # קבלת שם תהליך
                 process_name = self._get_process_name(process_id)
 
+                # Remove unwanted characters from the title
+                title = re.sub(r"[\x00-\x1f]", "", title)
+
                 # יצירת אובייקט WindowInfo
                 window_info = WindowInfo(
                     handle=hwnd,
@@ -144,6 +148,7 @@ class WindowTracker:
                     process_name=process_name,
                 )
 
+                logger.debug("new window: %s", window_info)
                 # קריאה לפונקצית callback
                 self.callback(window_info)
 

@@ -142,6 +142,7 @@ class LinuxKeylogger:
 
     def start_new_sequence(self, active_window: str = ""):
         with self._lock:
+            logger.debug(f"Active window changed: {active_window}")
             if self.sequence:
                 self.buffer.append(
                     DataWrapper(

