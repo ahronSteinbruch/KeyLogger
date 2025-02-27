@@ -112,19 +112,21 @@
                   <i class="fas fa-undo"></i> נקה סינון
                 </button>
               </div>
-              <div class="filters-container">
-                <div class="row">
-                  <div class="col-md-3 mb-3">
-                    <label for="machine-filter" class="form-label">מחשב</label>
-                    <select id="machine-filter" class="form-select">
+              <div class="filters-container compact-filters">
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <select
+                      id="machine-filter"
+                      class="form-select form-select-sm"
+                      title="בחר מחשב לסינון"
+                      aria-label="סינון לפי מחשב"
+                    >
                       <option value="">כל המחשבים</option>
                       <!-- אפשרויות ייטענו דינמית -->
                     </select>
                   </div>
-
-                  <div class="col-md-3 mb-3">
-                    <label for="date-from" class="form-label">החל מתאריך</label>
-                    <div class="input-group">
+                  <div class="col-md-3">
+                    <div class="input-group input-group-sm">
                       <span class="input-group-text"
                         ><i class="fas fa-calendar"></i
                       ></span>
@@ -132,14 +134,12 @@
                         type="text"
                         id="date-from"
                         class="form-control datepicker"
-                        placeholder="בחר תאריך"
+                        placeholder="מתאריך"
                       />
                     </div>
                   </div>
-
-                  <div class="col-md-3 mb-3">
-                    <label for="date-to" class="form-label">עד תאריך</label>
-                    <div class="input-group">
+                  <div class="col-md-3">
+                    <div class="input-group input-group-sm">
                       <span class="input-group-text"
                         ><i class="fas fa-calendar"></i
                       ></span>
@@ -147,34 +147,26 @@
                         type="text"
                         id="date-to"
                         class="form-control datepicker"
-                        placeholder="בחר תאריך"
+                        placeholder="עד תאריך"
                       />
                     </div>
                   </div>
-
-                  <div class="col-md-3 mb-3">
-                    <label for="text-search" class="form-label"
-                      >חיפוש טקסט</label
-                    >
-                    <div class="input-group">
-                      <span class="input-group-text"
-                        ><i class="fas fa-search"></i
-                      ></span>
+                  <div class="col-md-3">
+                    <div class="input-group input-group-sm">
                       <input
                         type="text"
                         id="text-search"
                         class="form-control"
                         placeholder="חיפוש חופשי..."
                       />
+                      <button
+                        id="apply-filters"
+                        class="btn btn-primary btn-sm"
+                        title="החל סינון"
+                      >
+                        <i class="fas fa-filter"></i>
+                      </button>
                     </div>
-                  </div>
-                </div>
-
-                <div class="row">
-                  <div class="col-12 text-center">
-                    <button id="apply-filters" class="btn btn-primary px-4">
-                      <i class="fas fa-filter"></i> החל סינון
-                    </button>
                   </div>
                 </div>
               </div>

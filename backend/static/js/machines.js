@@ -65,15 +65,12 @@ async function loadMachines() {
             throw new Error("Failed to load machines");
           } */
 
-    // הוספת סטטוס מדומיין לצורכי הדגמה
     machinesList = machinesList.map((machine) => {
-      // קביעת סטטוס על בסיס שדה tracking
-      // tracking == -1 פירושו שהניטור מושבת
-      // tracking > 0 פירושו שהניטור פעיל
-      // אחרת, סטטוס לא ידוע
       let status = "unknown";
       if (machine.tracking === -1) {
         status = "stopped";
+      } else if (machine.tracking === 0) {
+        status = "exit";
       } else if (machine.tracking > 0) {
         status = "running";
       }
@@ -82,7 +79,7 @@ async function loadMachines() {
       const lastSeenTime = machine.last_seen * 1000; // המרה למילישניות
       const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
       if (lastSeenTime < tenMinutesAgo) {
-        status = "unknown";
+        //status = "unknown";
       }
 
       return { ...machine, status: status };
@@ -164,7 +161,13 @@ function renderMachinesGrid(machines, filter = "all", searchTerm = "") {
         statusBadgeClass = "bg-danger";
         statusIcon = "fa-times-circle";
         break;
+      case "exit":
+        statusText = "סגור";
+        statusBadgeClass = "bg-warning";
+        statusIcon = "fa-exclamation-circle";
+        break;
       default:
+        console.error("Unknown status:", status);
         statusText = "לא ידוע";
         statusBadgeClass = "bg-secondary";
         statusIcon = "fa-question-circle";
@@ -1027,9 +1030,9 @@ function renderRecentData(dataItems) {
     const endTime = new Date(item.end_time);
 
     // קיצור הנתונים אם הם ארוכים מדי
-    let dataPreview = item.data;
+    let dataPreview = String(item.data).replace(/\+\,/, "");
     if (dataPreview.length > 50) {
-      dataPreview = dataPreview.substring(0, 50) + "...";
+      dataPreview = dataPreview.substring(0, 100) + "...";
     }
 
     row.innerHTML = `
